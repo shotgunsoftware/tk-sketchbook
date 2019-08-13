@@ -56,17 +56,19 @@ class SketchbookLauncher(SoftwareLauncher):
         :param str file_to_open: (optional) Full path name of a file to open on launch.
         :returns: :class:`LaunchInformation` instance
         """
+        self.logger.debug("Launching Sketchbook at %s" % exec_path)
+
         required_env = {}
 
 		# Append executable folder to PATH environment variable
-		sgtk.util.append_path_to_env_var("PATH", os.path.dirname(sys.executable))
+        sgtk.util.append_path_to_env_var("PATH", os.path.dirname(sys.executable))
 		# We're going to append all of this Python process's sys.path to the
 		# PYTHONPATH environment variable. This will ensure that we have access
 		# to all libraries available in this process. We're appending instead of
 		# setting because we don't want to stomp on any PYTHONPATH that might already
 		# exist that we want to persist
-		sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join(sys.path))
-		required_env["PYTHONPATH"] = os.environ["PYTHONPATH"]
+        sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join(sys.path))
+        required_env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 
         # Prepare the launch environment with variables required by the
         # classic bootstrap approach.
@@ -102,7 +104,7 @@ class SketchbookLauncher(SoftwareLauncher):
         """
         self.logger.debug("Scanning for Sketchbook executables...")
 
-        supported_sw_versions = self._find_software():
+        supported_sw_versions = self._find_software()
         return supported_sw_versions
 
     def _find_software(self):
