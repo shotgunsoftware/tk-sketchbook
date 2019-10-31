@@ -10,6 +10,7 @@
 
 import os
 import sys
+import subprocess
 
 import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
@@ -23,26 +24,23 @@ class SketchbookLauncher(SoftwareLauncher):
     context.
     """
 
-    # Named regex strings to insert into the executable template paths when
-    # matching against supplied versions and products. Similar to the glob
-    # strings, these allow us to alter the regex matching for any of the
-    # variable components of the path in one place
-    COMPONENT_REGEX_LOOKUP = {
-    }
+    def scan_software(self):
+        """
+        Scan the filesystem for SketchBook executables.
 
-    # This dictionary defines a list of executable template strings for each
-    # of the supported operating systems. The templates are used for both
-    # globbing and regex matches by replacing the named format placeholders
-    # with an appropriate glob or regex string. As Side FX adds modifies the
-    # install path on a given OS for a new release, a new template will need
-    # to be added here.
-    EXECUTABLE_TEMPLATES = {
-        "darwin": [
-            # Example: C:\Program Files\Autodesk\SketchbookAutoStudio2019\bin\Sketchbook.exe
-            # r"C:\Program Files\Autodesk\Sketchbook{code_name}{version}\bin\Sketchbook.exe",
-            "/Users/t_granad/Dev/SketchBook.app"
-        ],
-    }
+        :return: A list of :class:`SoftwareVersion` objects.
+        """
+        self.logger.debug ("Here!  Scanning for Sketchbook executables...")
+
+        if sys.platform == "darwin":
+            sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
+        elif sys.platform == "win32":
+            sbpPath = ''
+        
+        self.logger.debug ('Found SketchBook at ' + sbpPath)
+        sw_versions = [SoftwareVersion (sbpPath, 'SketchBook', sbpPath, self._icon_from_executable (sbpPath))]
+        return sw_versions
+
 
     def prepare_launch(self, exec_path, args, file_to_open=None):
         """
@@ -56,17 +54,17 @@ class SketchbookLauncher(SoftwareLauncher):
         :param str file_to_open: (optional) Full path name of a file to open on launch.
         :returns: :class:`LaunchInformation` instance
         """
-        self.logger.debug("Launching Sketchbook at %s" % exec_path)
+        self.logger.debug("Here!  Launching Sketchbook at %s" % exec_path)
 
         required_env = {}
 
-		# Append executable folder to PATH environment variable
+        # Append executable folder to PATH environment variable
         sgtk.util.append_path_to_env_var("PATH", os.path.dirname(sys.executable))
-		# We're going to append all of this Python process's sys.path to the
-		# PYTHONPATH environment variable. This will ensure that we have access
-		# to all libraries available in this process. We're appending instead of
-		# setting because we don't want to stomp on any PYTHONPATH that might already
-		# exist that we want to persist
+        # We're going to append all of this Python process's sys.path to the
+        # PYTHONPATH environment variable. This will ensure that we have access
+        # to all libraries available in this process. We're appending instead of
+        # setting because we don't want to stomp on any PYTHONPATH that might already
+        # exist that we want to persist
         sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join(sys.path))
         required_env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 
@@ -82,8 +80,8 @@ class SketchbookLauncher(SoftwareLauncher):
 
         return LaunchInformation(exec_path, args, required_env)
 
-    ##########################################################################################
-    # private methods
+
+    # Private methods
 
     def _icon_from_executable(self, code_name):
         """
@@ -96,22 +94,17 @@ class SketchbookLauncher(SoftwareLauncher):
         path = os.path.join(self.disk_location, "icon_256.png")
         return path
 
-    def scan_software(self):
-        """
-        Scan the filesystem for maya executables.
 
-        :return: A list of :class:`SoftwareVersion` objects.
-        """
-        self.logger.debug("Scanning for Sketchbook executables...")
 
-        supported_sw_versions = self._find_software()
-        return supported_sw_versions
 
-    def _find_software(self):
-        """
-        Find executables in the default install locations.
-        """
-        # all the discovered executables
-        sw_versions = ["/Users/t_granad/Dev/SketchBook.app"]
-        return sw_versions
+
+
+
+
+
+
+
+
+
+
 
