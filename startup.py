@@ -24,23 +24,6 @@ class SketchbookLauncher(SoftwareLauncher):
     context.
     """
 
-    def scan_software(self):
-        """
-        Scan the filesystem for SketchBook executables.
-
-        :return: A list of :class:`SoftwareVersion` objects.
-        """
-        self.logger.debug ("Here!  Scanning for Sketchbook executables...")
-
-        if sys.platform == "darwin":
-            sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
-        elif sys.platform == "win32":
-            sbpPath = ''
-        
-        self.logger.debug ('Found SketchBook at ' + sbpPath)
-        sw_versions = [SoftwareVersion (sbpPath, 'SketchBook', sbpPath, self._icon_from_executable (sbpPath))]
-        return sw_versions
-
 
     def prepare_launch(self, exec_path, args, file_to_open=None):
         """
@@ -81,28 +64,23 @@ class SketchbookLauncher(SoftwareLauncher):
         return LaunchInformation(exec_path, args, required_env)
 
 
-    # Private methods
-
-    def _icon_from_executable(self, code_name):
+    def scan_software(self):
         """
-        Find the application icon based on the code_name.
+        Scan the filesystem for SketchBook executables.
 
-        :param code_name: Product code_name (AutoStudio, Design, ...).
-
-        :returns: Full path to application icon as a string or None.
+        :return: A list of :class:`SoftwareVersion` objects.
         """
-        path = os.path.join(self.disk_location, "icon_256.png")
-        return path
+        self.logger.debug ("Here!  Scanning for Sketchbook executables...")
 
+        if sys.platform == "darwin":
+            sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"']).strip ()
+        elif sys.platform == "win32":
+            sbpPath = ''
+        
+        self.logger.debug ('Found SketchBook at ' + sbpPath)
+        icon_path = os.path.join (self.disk_location, "SketchBook.png")
 
-
-
-
-
-
-
-
-
+        return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
 
 
 
