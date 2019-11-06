@@ -74,6 +74,8 @@ class SketchbookLauncher(SoftwareLauncher):
 
         if sys.platform == "darwin":
             sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"']).strip ()
+            sbpPath += '/Contents/MacOS/SketchBook'
+            sbpPath = '/Users/t_granad/Dev/SketchBook/SketchBook/Desktop/build.macos/Debug_Membership/r+d/SketchBook.app/Contents/MacOS/SketchBook'
         elif sys.platform == "win32":
             sbpPath = ''
         
