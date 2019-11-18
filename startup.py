@@ -42,14 +42,16 @@ class SketchbookLauncher(SoftwareLauncher):
         required_env = {}
 
         # Append executable folder to PATH environment variable
-        sgtk.util.append_path_to_env_var("PATH", os.path.dirname(sys.executable))
+        sgtk.util.append_path_to_env_var ("PATH", os.path.dirname(sys.executable))
+        
         # We're going to append all of this Python process's sys.path to the
         # PYTHONPATH environment variable. This will ensure that we have access
         # to all libraries available in this process. We're appending instead of
         # setting because we don't want to stomp on any PYTHONPATH that might already
         # exist that we want to persist
-        sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join(sys.path))
-        required_env["PYTHONPATH"] = os.environ["PYTHONPATH"]
+        sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
+        sgtk.util.append_path_to_env_var ("PYTHONPATH", '/Users/t_granad/Dev/SketchBook/SketchBook/Desktop/build.macos/Debug_Membership/r+d/SketchBook.app/Contents/Frameworks/python2.7/site-packages')
+        sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
 
         # Prepare the launch environment with variables required by the
         # classic bootstrap approach.
