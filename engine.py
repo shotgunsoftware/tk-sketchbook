@@ -73,6 +73,16 @@ class SketchBookEngine (Engine):
 
         # init operations
         self.operations = self._tk_sketchbook.SketchBookOperations (engine=self)
+        
+        self.logger.debug ("%s: About to get tk-multi-about...", self)
+        self.logger.debug ("%s: Apps are %s", self, self.apps)
+        publisher = self.apps.get ("tk-multi-about")
+        if publisher:
+            self.logger.debug ("%s: About to import tk-multi-about...", self)
+            tk_multi_about = publisher.import_module ("tk_multi_about")
+            self.logger.debug ("%s: About to show tk-multi-about dialog...", self)
+            tk_multi_about.show_dialog (publisher)
+
 
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
@@ -94,12 +104,13 @@ class SketchBookEngine (Engine):
             self._create_menu ()
 
     def _create_menu (self):
-        self.logger.debug ("Creating menu")
-        self.menu.create ()
+        # self.logger.debug ("Creating menu")
+        # self.menu.create ()
         
-        self.logger.debug ("Raw menu options: {}".format (self.menu.raw_options))
-        self.logger.debug ("Menu options: {}".format (self.menu.options))
-        sketchbook_api.create_menu (self.menu.options)
+        # self.logger.debug ("Raw menu options: {}".format (self.menu.raw_options))
+        # self.logger.debug ("Menu options: {}".format (self.menu.options))
+        # sketchbook_api.create_menu (self.menu.options)
+        pass
 
 
     def _emit_log_message (self, handler, record):
