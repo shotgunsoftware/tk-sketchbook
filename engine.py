@@ -23,6 +23,7 @@ import logging
 from tank.platform import Engine
 
 import SketchBookLogger 
+import sketchbook_api
 
 # Although the engine has logging already, this logger is needed for callback based logging
 # where an engine may not be present.
@@ -74,15 +75,20 @@ class SketchBookEngine (Engine):
         # init operations
         self.operations = self._tk_sketchbook.SketchBookOperations (engine=self)
         
-        self.logger.debug ("%s: About to get tk-multi-about...", self)
-        self.logger.debug ("%s: Apps are %s", self, self.apps)
-        publisher = self.apps.get ("tk-multi-about")
-        if publisher:
-            self.logger.debug ("%s: About to import tk-multi-about...", self)
-            tk_multi_about = publisher.import_module ("tk_multi_about")
-            self.logger.debug ("%s: About to show tk-multi-about dialog...", self)
-            tk_multi_about.show_dialog (publisher)
-
+        self.logger.debug ("Installed commands are %s.", self.commands)
+        sketchbook_api.set_commands (self.commands.keys ())
+        
+        self.logger.debug ("About to launch console.")
+        # self.commands ['Shotgun Python Console...'] ['callback'] ();
+        
+        # self.logger.debug ("%s: About to get tk-multi-about...", self)
+        # self.logger.debug ("%s: Apps are %s", self, self.apps)
+        # publisher = self.apps.get ("tk-multi-pythonconsole")
+        # if publisher:
+        #    self.logger.debug ("%s: About to import tk-multi-pythonconsole", self)
+        #    m = publisher.import_module ("app")
+        #    self.logger.debug ("%s: About to show tk-multi-pythonconsole dialog...", self)
+        #    # m.show_dialog (publisher)
 
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
