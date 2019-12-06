@@ -76,9 +76,8 @@ class SketchBookEngine (Engine):
         self.operations = self._tk_sketchbook.SketchBookOperations (engine=self)
         
         self.logger.debug ("Installed commands are %s.", self.commands)
-        sketchbook_api.set_commands (self.commands.keys ())
         
-        self.logger.debug ("About to launch console.")
+        # self.logger.debug ("About to launch console.")
         # self.commands ['Shotgun Python Console...'] ['callback'] ();
         
         # self.logger.debug ("%s: About to get tk-multi-about...", self)
@@ -89,7 +88,14 @@ class SketchBookEngine (Engine):
         #    m = publisher.import_module ("app")
         #    self.logger.debug ("%s: About to show tk-multi-pythonconsole dialog...", self)
         #    # m.show_dialog (publisher)
+    
+    def fetch_command_names (self):
+        self.logger.debug ("Returning command list %s.", self.commands.keys ())
+        sketchbook_api.set_commands (self.commands.keys ())
 
+    def run_command (self, commandName):
+        pass
+        
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
 
