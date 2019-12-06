@@ -94,7 +94,11 @@ class SketchBookEngine (Engine):
         sketchbook_api.set_commands (self.commands.keys ())
 
     def run_command (self, commandName):
-        pass
+    	self.logger.debug ("Running command %s.", commandName)
+    	
+    	if self.commands [commandName]:
+    		if self.commands [commandName] ['callback']:
+    			self.commands [commandName] ['callback'] ();
         
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
