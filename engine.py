@@ -8,11 +8,6 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
-"""
-A SketchBook engine for Tank.
-
-"""
-
 import sgtk
 import sys
 import traceback
@@ -73,32 +68,20 @@ class SketchBookEngine (Engine):
         self.menu = self._tk_sketchbook.SketchBookMenu (engine=self)
 
         # init operations
-        self.operations = self._tk_sketchbook.SketchBookOperations (engine=self)
+        self.operations = self._tk_sketchbook
         
         self.logger.debug ("Installed commands are %s.", self.commands)
-        
-        # self.logger.debug ("About to launch console.")
-        # self.commands ['Shotgun Python Console...'] ['callback'] ();
-        
-        # self.logger.debug ("%s: About to get tk-multi-about...", self)
-        # self.logger.debug ("%s: Apps are %s", self, self.apps)
-        # publisher = self.apps.get ("tk-multi-pythonconsole")
-        # if publisher:
-        #    self.logger.debug ("%s: About to import tk-multi-pythonconsole", self)
-        #    m = publisher.import_module ("app")
-        #    self.logger.debug ("%s: About to show tk-multi-pythonconsole dialog...", self)
-        #    # m.show_dialog (publisher)
     
     def fetch_command_names (self):
         self.logger.debug ("Returning command list %s.", self.commands.keys ())
         sketchbook_api.set_commands (self.commands.keys ())
 
     def run_command (self, commandName):
-    	self.logger.debug ("Running command %s.", commandName)
-    	
-    	if self.commands [commandName]:
-    		if self.commands [commandName] ['callback']:
-    			self.commands [commandName] ['callback'] ();
+        self.logger.debug ("Running command %s.", commandName)
+
+        if self.commands [commandName]:
+            if self.commands [commandName] ['callback']:
+                self.commands [commandName] ['callback'] ();
         
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
