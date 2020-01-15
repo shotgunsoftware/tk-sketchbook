@@ -71,10 +71,18 @@ class SketchBookEngine (Engine):
         self.operations = self._tk_sketchbook
         
         self.logger.debug ("Installed commands are %s.", self.commands)
+
+        QtGui.QApplication.setStyle ("cleanlooks")
+        qt_application = QtGui.QApplication ([])
+        qt_application.setStyleSheet (self._get_standard_qt_stylesheet ())
     
     def fetch_command_names (self):
         self.logger.debug ("Returning command list %s.", self.commands.keys ())
         sketchbook_api.set_commands (self.commands.keys ())
+
+    def _get_standard_qt_stylesheet(self):
+        with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
+            return f.read ()
 
     def run_command (self, commandName):
         self.logger.debug ("Running command %s.", commandName)
