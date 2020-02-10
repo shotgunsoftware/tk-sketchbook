@@ -50,7 +50,10 @@ class SketchbookLauncher(SoftwareLauncher):
         # setting because we don't want to stomp on any PYTHONPATH that might already
         # exist that we want to persist
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
-        sgtk.util.append_path_to_env_var ("PYTHONPATH", '/Users/t_granad/Dev/SketchBook/SketchBook/Desktop/build.macos/Debug_Membership/r+d/SketchBook.app/Contents/Frameworks/python2.7/site-packages')
+        
+        sitePackagesPath = os.path.join (self.sketchBookPath (), '/Contents/Frameworks/python2.7/site-packages')
+        sgtk.util.append_path_to_env_var ("PYTHONPATH", sitePackagesPath)
+        
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
 
         # Prepare the launch environment with variables required by the
@@ -74,16 +77,20 @@ class SketchbookLauncher(SoftwareLauncher):
         """
         self.logger.debug ("Here!  Scanning for Sketchbook executables...")
 
+        sbpPath = self.sketchBookPath ()
+        self.logger.debug ('Found SketchBook at ' + sbpPath)
+        icon_path = os.path.join (self.disk_location, "SketchBook.png")
+
+        return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
+
+    def sketchBookPath(self):
         if sys.platform == "darwin":
             sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"']).strip ()
             sbpPath += '/Contents/MacOS/SketchBook'
         elif sys.platform == "win32":
             sbpPath = ''
         
-        self.logger.debug ('Found SketchBook at ' + sbpPath)
-        icon_path = os.path.join (self.disk_location, "SketchBook.png")
-
-        return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
+        return sbpPath
 
 
 
