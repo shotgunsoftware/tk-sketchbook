@@ -11,6 +11,8 @@
 import os
 import sys
 import subprocess
+import datetime
+from os.path import expanduser
 
 import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
@@ -37,7 +39,7 @@ class SketchbookLauncher(SoftwareLauncher):
         :param str file_to_open: (optional) Full path name of a file to open on launch.
         :returns: :class:`LaunchInformation` instance
         """
-        self.logger.debug("Here!  Launching Sketchbook at %s" % exec_path)
+        self.startLog ("Here!  Launching Sketchbook at %s" % exec_path)
         
         required_env = {}
 
@@ -58,7 +60,7 @@ class SketchbookLauncher(SoftwareLauncher):
 
         # Prepare the launch environment with variables required by the
         # classic bootstrap approach.
-        self.logger.debug("Preparing Sketchbook Launch...")
+        self.startLog ("Preparing Sketchbook Launch...")
         required_env["SGTK_ENGINE"] = self.engine_name
         required_env["SGTK_CONTEXT"] = sgtk.context.serialize(self.context)
 
@@ -75,23 +77,24 @@ class SketchbookLauncher(SoftwareLauncher):
 
         :return: A list of :class:`SoftwareVersion` objects.
         """
-        self.logger.debug ("Here!  Scanning for Sketchbook executables...")
-
-        sbpPath = self.sketchBookPath ()
-        self.logger.debug ('Found SketchBook at ' + sbpPath)
+        sbpPath = self.sketchBookPath () + '/Contents/MacOS/SketchBook'
+        self.startLog ('Found SketchBook at ' + sbpPath)
         icon_path = os.path.join (self.disk_location, "SketchBook.png")
 
         return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
 
     def sketchBookPath(self):
         if sys.platform == "darwin":
-            sbpPath = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"']).strip ()
-            sbpPath += '/Contents/MacOS/SketchBook'
+            found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
+            sbpPath = found.strip ().split () [0]
         elif sys.platform == "win32":
             sbpPath = ''
         
         return sbpPath
 
+    def startLog(self, message):
+        with open (expanduser ("~") + "/Desktop/start_log.txt", "a") as logfile:
+            logfile.write (datetime.datetime.now ().strftime ("%a %-d %b %H:%M") + '  ' + message + "\n")
 
 
 
