@@ -53,8 +53,9 @@ class SketchbookLauncher(SoftwareLauncher):
         # exist that we want to persist
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
         
-        sitePackagesPath = os.path.join (self.sketchBookPath (), '/Contents/Frameworks/python2.7/site-packages')
-        sgtk.util.append_path_to_env_var ("PYTHONPATH", sitePackagesPath)
+        if sys.platform == "darwin":
+            sitePackagesPath = os.path.join (self.sketchBookPath (), '/Contents/Frameworks/python2.7/site-packages')
+            sgtk.util.append_path_to_env_var ("PYTHONPATH", sitePackagesPath)
         
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
 
@@ -77,7 +78,11 @@ class SketchbookLauncher(SoftwareLauncher):
 
         :return: A list of :class:`SoftwareVersion` objects.
         """
-        sbpPath = self.sketchBookPath () + '/Contents/MacOS/SketchBook'
+        if sys.platform == "darwin":
+            sbpPath = self.sketchBookPath () + '/Contents/MacOS/SketchBook'
+        elif sys.platform == 'win32':
+            sbpPath = self.sketchBookPath ()
+
         self.startLog ('Found SketchBook at ' + sbpPath)
         icon_path = os.path.join (self.disk_location, "SketchBook.png")
 
@@ -88,13 +93,13 @@ class SketchbookLauncher(SoftwareLauncher):
             found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
             sbpPath = found.strip ().split () [0]
         elif sys.platform == "win32":
-            sbpPath = ''
+            sbpPath = 'C:\\Users\\agrant\\SketchBook\\_generated\\Win\\cmake_out\\SketchBook\\Desktop\\Debug\\Sketchbook.exe'
         
         return sbpPath
 
     def startLog(self, message):
         with open (expanduser ("~") + "/Desktop/start_log.txt", "a") as logfile:
-            logfile.write (datetime.datetime.now ().strftime ("%a %-d %b %H:%M") + '  ' + message + "\n")
+            logfile.write (datetime.datetime.now ().strftime ("%a %d %b %H:%M") + '  ' + message + "\n")
 
 
 
