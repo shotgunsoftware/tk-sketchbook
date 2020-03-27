@@ -54,7 +54,7 @@ class SketchbookLauncher(SoftwareLauncher):
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
         
         if sys.platform == "darwin":
-            sitePackagesPath = os.path.join (self.sketchBookPath (), '/Contents/Frameworks/python2.7/site-packages')
+            sitePackagesPath = os.path.join (self.macAppPath (), '/Contents/Frameworks/python2.7/site-packages')
             sgtk.util.append_path_to_env_var ("PYTHONPATH", sitePackagesPath)
         
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
@@ -78,24 +78,40 @@ class SketchbookLauncher(SoftwareLauncher):
 
         :return: A list of :class:`SoftwareVersion` objects.
         """
-        if sys.platform == "darwin":
-            sbpPath = self.sketchBookPath () + '/Contents/MacOS/SketchBook'
-        elif sys.platform == 'win32':
-            sbpPath = self.sketchBookPath ()
-
-        self.startLog ('Found SketchBook at ' + sbpPath)
+        sbpPath = self.sketchBookPath ()
         icon_path = os.path.join (self.disk_location, "SketchBook.png")
-
         return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
 
     def sketchBookPath(self):
         if sys.platform == "darwin":
-            found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
-            sbpPath = found.strip ().split () [0]
+            sbpPath = self.macAppPath () + '/Contents/MacOS/SketchBook'
         elif sys.platform == "win32":
-            sbpPath = 'C:\\Users\\agrant\\SketchBook\\_generated\\Win\\cmake_out\\SketchBook\\Desktop\\Debug\\Sketchbook.exe'
+            paths = self.windowsExePath ('Users')
+            if len (paths) == 0:
+                paths = self.windowsExePath ('Program Files')
+            sbpPath = paths [0] if len (paths) > 0 else ''
         
+        self.startLog ('Found SketchBook at ' + sbpPath)
         return sbpPath
+
+    def macAppPath(self):
+        found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
+        paths = found.strip ().split ()
+        return paths [0] if len (paths) else ''
+
+    def windowsExePath(self, directory):
+        paths = ''
+        exePatterns = ['C:\\' + directory + '\\' + name + '.exe' for name in ['SketchBook', 'SketchBookPro']]
+        
+        for pattern in exePatterns:
+            command = 'dir "' + pattern + '" /s /B'
+            try:
+                paths += subprocess.check_output (command, shell=True, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as e:
+                pass
+
+        return paths.splitlines ()
+
 
     def startLog(self, message):
         with open (expanduser ("~") + "/Desktop/start_log.txt", "a") as logfile:
