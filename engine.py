@@ -77,8 +77,9 @@ class SketchBookEngine (Engine):
         qt_application.setStyleSheet (self._get_standard_qt_stylesheet ())
     
     def fetch_command_names (self):
-        self.logger.debug ("Returning command list %s.", self.commands.keys ())
-        sketchbook_api.set_commands (self.commands.keys ())
+        result = list (self.commands.keys ())
+        self.logger.debug ("Returning command list %s.", result)
+        sketchbook_api.set_commands (result)
 
     def _get_standard_qt_stylesheet(self):
         with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
