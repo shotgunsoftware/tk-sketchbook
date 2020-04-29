@@ -86,12 +86,17 @@ class SketchbookLauncher(SoftwareLauncher):
         if sys.platform == "darwin":
             sbpPath = self.macAppPath () + '/Contents/MacOS/SketchBook'
         elif sys.platform == "win32":
-            paths = self.windowsExePath ('Users')
+            paths = self.windowsExePath (expanduser("~/Desktop"))
+
             if len (paths) == 0:
-                paths = self.windowsExePath ('Program Files')
+                paths = self.windowsExePath (expanduser("~/SketchBook"))
+
+            if len (paths) == 0:
+                paths = self.windowsExePath ('C:\\Program Files')
+
             sbpPath = paths [0] if len (paths) > 0 else ''
         
-        self.startLog ('Found SketchBook at ' + sbpPath)
+        self.startLog ('2Found SketchBook at ' + sbpPath)
         return sbpPath
 
     def macAppPath(self):
@@ -101,7 +106,7 @@ class SketchbookLauncher(SoftwareLauncher):
 
     def windowsExePath(self, directory):
         paths = ''
-        exePatterns = ['C:\\' + directory + '\\' + name + '.exe' for name in ['SketchBook', 'SketchBookPro']]
+        exePatterns = [directory + '\\' + name + '.exe' for name in ['SketchBook', 'SketchBookPro']]
         
         for pattern in exePatterns:
             command = 'dir "' + pattern + '" /s /B'
