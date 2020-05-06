@@ -171,11 +171,11 @@ QAbstractItemView
 
 QPushButton
 {
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #565656, stop: 0.1 #525252, stop: 0.5 #4e4e4e, stop: 0.9 #4a4a4a, stop: 1 #464646);
+    background-color: #f7f7f9;
     border-width: 1px;
-    border-color: rgb(20, 20, 20);
+    border-color: #f4f4f6;
     border-style: solid;
-    border-radius: 1;
+    border-radius: 2;
     padding: 3px;
     padding-left: 5px;
     padding-right: 5px;
@@ -183,9 +183,9 @@ QPushButton
 
 QToolButton
 {
-    border-color: rgb(20, 20, 20);
+    border-color: #f4f4f6;
     border-style: solid;
-    border-radius: 1;
+    border-radius: 2;
     border-width: 1px;
     padding: 3px;
     padding-left: 5px;
@@ -194,16 +194,16 @@ QToolButton
 
 QPushButton:pressed, QToolButton:pressed
 {
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #2d2d2d, stop: 0.1 #2b2b2b, stop: 0.5 #292929, stop: 0.9 #282828, stop: 1 #252525);
+    background-color: #e1e1e1;
 }
 
 QComboBox
 {
     selection-background-color: #ffaa00;
-    background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #565656, stop: 0.1 #525252, stop: 0.5 #4e4e4e, stop: 0.9 #4a4a4a, stop: 1 #464646);
+    background-color: #f7f7f9;
     border-style: solid;
-    border: 1px solid #1e1e1e;
-    border-radius: 5;
+    border: 1px solid #f4f4f6;
+    border-radius: 2;
 }
 
 QComboBox:hover, QPushButton:hover, QLineEdit:focus, QToolButton:hover

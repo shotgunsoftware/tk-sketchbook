@@ -15,6 +15,7 @@ import re
 import time
 import os
 import logging
+import PySide2
 from tank.platform import Engine
 
 import SketchBookLogger 
@@ -71,10 +72,6 @@ class SketchBookEngine (Engine):
         self.operations = self._tk_sketchbook
         
         self.logger.debug ("Installed commands are %s.", self.commands)
-
-        QtGui.QApplication.setStyle ("cleanlooks")
-        qt_application = QtGui.QApplication ([])
-        qt_application.setStyleSheet (self._get_standard_qt_stylesheet ())
     
     def fetch_command_names (self):
         result = list (self.commands.keys ())
