@@ -53,10 +53,6 @@ class SketchbookLauncher(SoftwareLauncher):
         # exist that we want to persist
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
         
-        if sys.platform == "darwin":
-            sitePackagesPath = os.path.join (self.macAppPath (), '/Contents/Frameworks/python2.7/site-packages')
-            sgtk.util.append_path_to_env_var ("PYTHONPATH", sitePackagesPath)
-        
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
 
         # Prepare the launch environment with variables required by the
