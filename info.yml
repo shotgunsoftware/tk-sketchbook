@@ -35,9 +35,9 @@ configuration:
 requires_shotgun_fields:
 
 # More verbose description of this item
-display_name: "Shotgun Engine for Sketchbook"
-description: "Shotgun Integration for Sketchbook DCC"
+display_name: "Shotgun Engine for Autodesk Sketchbook"
+description: "Shotgun Integration for Autodesk Sketchbook"
 
 # Required minimum versions for this item to run
 requires_shotgun_version:
-requires_core_version: "v0.18.116"
+requires_core_version: "v0.19.5"
