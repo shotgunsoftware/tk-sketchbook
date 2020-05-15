@@ -38,4 +38,3 @@ def start_engine():
     else:
         logger.debug("Engine started successfully, returning 'SketchBookEngine' object")
         return engine
-

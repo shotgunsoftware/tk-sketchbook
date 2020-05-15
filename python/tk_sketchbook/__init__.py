@@ -2,4 +2,3 @@
 
 from .menu import SketchBookMenu
 from .operations import SketchBookOperations
-
