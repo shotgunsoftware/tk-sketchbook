@@ -1,11 +1,11 @@
 # Copyright (c) 2013 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
@@ -68,10 +68,10 @@ def find_parent_process_id(process_id):
     parent_process_id = None
     try:
         h_process_snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
- 
+
         pe = PROCESSENTRY32()
         pe.dwSize = ctypes.sizeof(PROCESSENTRY32)
-        
+
         ret = Process32First(h_process_snapshot, ctypes.byref(pe))
         while ret:
             if pe.th32ProcessID == process_id:
@@ -82,7 +82,7 @@ def find_parent_process_id(process_id):
         pass
     else:
         CloseHandle(h_process_snapshot)
-        
+
     return parent_process_id
 
 
@@ -121,12 +121,12 @@ def find_windows(process_id = None, class_name = None, window_text = None, stop_
         # try to match process id:
         matches_proc_id = True
         if process_id is not None:
-            win_process_id = ctypes.c_long()      
+            win_process_id = ctypes.c_long()
             GetWindowThreadProcessId(hwnd, ctypes.byref(win_process_id))
             matches_proc_id = (win_process_id.value == process_id)
         if not matches_proc_id:
             return True
-        
+
         # try to match class name:
         matches_class_name = True
         if class_name is not None:
@@ -136,7 +136,7 @@ def find_windows(process_id = None, class_name = None, window_text = None, stop_
             matches_class_name = (class_name == buffer.value)
         if not matches_class_name:
             return True
-        
+
         # try to match window text:
         matches_window_text = True
         if window_text is not None:
@@ -144,15 +144,15 @@ def find_windows(process_id = None, class_name = None, window_text = None, stop_
             matches_window_text = (window_text in hwnd_text)
         if not matches_window_text:
             return True
-        
-        # found a match    
+
+        # found a match
         found_hwnds.append(hwnd)
-        
+
         return not stop_if_found
-            
+
     # enumerate all top-level windows:
     EnumWindows(EnumWindowsProc(enum_windows_proc), None)
-    
+
     return found_hwnds
 
 
@@ -165,8 +165,8 @@ def qwidget_winid_to_hwnd(id):
     # Setup arguments and return types
     ctypes.pythonapi.PyCObject_AsVoidPtr.restype = ctypes.c_void_p
     ctypes.pythonapi.PyCObject_AsVoidPtr.argtypes = [ ctypes.py_object ]
- 
+
     # Convert PyCObject to a void pointer
     hwnd = ctypes.pythonapi.PyCObject_AsVoidPtr(id)
-    
+
     return hwnd

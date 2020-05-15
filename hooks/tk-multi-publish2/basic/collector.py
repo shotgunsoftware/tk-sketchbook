@@ -1,11 +1,11 @@
 ﻿# Copyright (c) 2017 Shotgun Software Inc.
-# 
+#
 # CONFIDENTIAL AND PROPRIETARY
-# 
-# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit 
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
 # Source Code License included in this distribution package. See LICENSE.
-# By accessing, using, copying or modifying this work you indicate your 
-# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights 
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Shotgun Software Inc.
 
 import os
@@ -55,11 +55,11 @@ class SketchBookSessionCollector(HookBaseClass):
 
         icon_path = os.path.join (self.disk_location, os.pardir, os.pardir, os.pardir, "SketchBook.png")
         session_item.set_icon_from_path (icon_path)
-        
+
         session_item.set_thumbnail_from_path (path)
 
         self.logger.debug ("About to try path " + path)
-        
+
         item = super (SketchBookSessionCollector, self)._collect_file (
             session_item,
             path,

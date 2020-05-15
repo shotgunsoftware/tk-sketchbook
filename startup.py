@@ -40,19 +40,19 @@ class SketchbookLauncher(SoftwareLauncher):
         :returns: :class:`LaunchInformation` instance
         """
         self.startLog ("Here!  Launching Sketchbook at %s" % exec_path)
-        
+
         required_env = {}
 
         # Append executable folder to PATH environment variable
         sgtk.util.append_path_to_env_var ("PATH", os.path.dirname(sys.executable))
-        
+
         # We're going to append all of this Python process's sys.path to the
         # PYTHONPATH environment variable. This will ensure that we have access
         # to all libraries available in this process. We're appending instead of
         # setting because we don't want to stomp on any PYTHONPATH that might already
         # exist that we want to persist
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.pathsep.join (sys.path))
-        
+
         sgtk.util.append_path_to_env_var ("PYTHONPATH", os.path.join (self.disk_location, "startup"))
 
         # Prepare the launch environment with variables required by the
@@ -91,7 +91,7 @@ class SketchbookLauncher(SoftwareLauncher):
                 paths = self.windowsExePath ('C:\\Program Files')
 
             sbpPath = paths [0] if len (paths) > 0 else ''
-        
+
         self.startLog ('2Found SketchBook at ' + sbpPath)
         return sbpPath
 
@@ -103,7 +103,7 @@ class SketchbookLauncher(SoftwareLauncher):
     def windowsExePath(self, directory):
         paths = ''
         exePatterns = [directory + '\\' + name + '.exe' for name in ['SketchBook', 'SketchBookPro']]
-        
+
         for pattern in exePatterns:
             command = 'dir "' + pattern + '" /s /B'
             try:
@@ -117,7 +117,3 @@ class SketchbookLauncher(SoftwareLauncher):
     def startLog(self, message):
         with open (expanduser ("~") + "/Desktop/start_log.txt", "a") as logfile:
             logfile.write (datetime.datetime.now ().strftime ("%a %d %b %H:%M") + '  ' + message + "\n")
-
-
-
-

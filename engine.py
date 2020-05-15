@@ -18,7 +18,7 @@ import logging
 import PySide2
 from tank.platform import Engine
 
-import SketchBookLogger 
+import SketchBookLogger
 import sketchbook_api
 
 # Although the engine has logging already, this logger is needed for callback based logging
@@ -70,9 +70,9 @@ class SketchBookEngine (Engine):
 
         # init operations
         self.operations = self._tk_sketchbook
-        
+
         self.logger.debug ("Installed commands are %s.", self.commands)
-    
+
     def fetch_command_names (self):
         result = list (self.commands.keys ())
         self.logger.debug ("Returning command list %s.", result)
@@ -88,7 +88,7 @@ class SketchBookEngine (Engine):
         if self.commands [commandName]:
             if self.commands [commandName] ['callback']:
                 self.commands [commandName] ['callback'] ();
-        
+
     def on_plugin_init (self):
         self.logger.debug("Plugin initialized signal received")
 
@@ -111,7 +111,7 @@ class SketchBookEngine (Engine):
     def _create_menu (self):
         # self.logger.debug ("Creating menu")
         # self.menu.create ()
-        
+
         # self.logger.debug ("Raw menu options: {}".format (self.menu.raw_options))
         # self.logger.debug ("Menu options: {}".format (self.menu.options))
         # sketchbook_api.create_menu (self.menu.options)
@@ -126,6 +126,3 @@ class SketchBookEngine (Engine):
 
         msg = formatter.format (record)
         SketchBookLogger.logMessage (msg)
-
-
-
