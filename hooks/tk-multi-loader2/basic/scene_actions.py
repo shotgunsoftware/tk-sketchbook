@@ -88,7 +88,7 @@ class SketchbookActions(HookBaseClass):
                 }
             )
 
-        if "add_image" in actions:
+        if "import_file" in actions:
             action_instances.append(
                 {
                     "name": "Add Image...",
@@ -125,7 +125,7 @@ class SketchbookActions(HookBaseClass):
         if name == "open":
             return sketchbook_api.open_file(path)
 
-        elif name == "add_file":
+        elif name == "import_file":
             return sketchbook_api.import_file(path)
 
     def execute_multiple_actions(self, actions):
