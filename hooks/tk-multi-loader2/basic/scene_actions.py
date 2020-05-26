@@ -78,22 +78,22 @@ class SketchbookActions(HookBaseClass):
             # base class doesn't have the method, so ignore and continue
             pass
 
-        if "open" in actions:
+        if "open_file" in actions:
             action_instances.append(
                 {
-                    "name": "Open...",
+                    "name": "open_file",
                     "params": None,
                     "caption": "Open File",
                     "description": "Open an image file to start working with.",
                 }
             )
 
-        if "import_file" in actions:
+        if "add_image" in actions:
             action_instances.append(
                 {
-                    "name": "Add Image...",
+                    "name": "add_image",
                     "params": None,
-                    "caption": "Add Image",
+                    "caption": "Add Image...",
                     "description": "This will add the selected image file as a new layer.",
                 }
             )
@@ -122,11 +122,10 @@ class SketchbookActions(HookBaseClass):
         # resolve path
         path = self.get_publish_path(sg_publish_data)
 
-        if name == "open":
+        if name == "open_file":
             return sketchbook_api.open_file(path)
-
-        elif name == "import_file":
-            return sketchbook_api.import_file(path)
+        elif name == "add_image":
+            return sketchbook_api.add_image(path)
 
     def execute_multiple_actions(self, actions):
         """
