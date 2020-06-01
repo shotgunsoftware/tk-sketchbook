@@ -16,7 +16,7 @@ from os.path import expanduser
 
 import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
-
+from sgtk.util import is_windows, is_macos
 
 class SketchbookLauncher(SoftwareLauncher):
     """
@@ -79,9 +79,9 @@ class SketchbookLauncher(SoftwareLauncher):
         return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
 
     def sketchBookPath(self):
-        if sys.platform == "darwin":
+        if is_macos():
             sbpPath = self.macAppPath () + '/Contents/MacOS/SketchBook'
-        elif sys.platform == "win32":
+        elif is_windows():
             paths = self.windowsExePath (expanduser("~/Desktop"))
 
             if len (paths) == 0:
