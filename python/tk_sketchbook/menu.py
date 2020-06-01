@@ -1,4 +1,12 @@
-# Copyright (c) 2019 Autodesk Inc
+# Copyright (c) 2020 Autodesk
+#
+# CONFIDENTIAL AND PROPRIETARY
+#
+# This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+# Source Code License included in this distribution package. See LICENSE.
+# By accessing, using, copying or modifying this work you indicate your
+# agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+# not expressly granted therein are reserved by Shotgun Software Inc.
 
 """
 Menu handling for SketchBook
@@ -13,167 +21,156 @@ from sgtk.platform.qt import QtCore
 
 
 class SketchBookMenu(object):
-    """SketchBook menu handler."""
+    ABOUT_MENU_TEXT = "About Shotgun Pipeline Toolkit"
+    JUMP_TO_SG_TEXT = "Jump to Shotgun"
+    JUMP_TO_FS_TEXT = "Jump to File System"
 
     def __init__(self, engine):
         """Initialize attributes."""
         # engine instance
         self._engine = engine
-
         self.logger = self._engine.logger
-        self.raw_options = None
-        self.options = None
 
     def create(self):
-        self.options = []
-        self.raw_options = []
+        self.logger.info("Creating Shotgun Menu")
 
-        # fill raw_options
-        self._collect()
+        # Get all options and sort them
+        options = [(caption, data) for caption, data in self._engine.commands.items()]
+        if options:
+            options.sort(key=lambda option: option[0])
 
-        # create context submenu
-        self._create_context_submenu()
+        # Context submenu
+        root_menu.addMenu(self._create_context_submenu(options))
+        root_menu.addSeparator()
 
-        # create favourites options
-        self._create_favourites_options()
+        # Favourites
+        favourites = self._create_favourites(options)
+        [root_menu.addAction(caption, callback) for caption, callback in favourites]
+        if favourites:
+            root_menu.addSeparator()
 
-        # create apps options
-        self._create_apps_options()
-
-    def _collect(self):
-        """Browse configuration to set raw options."""
-        self.raw_options = []
-
-        for caption, data in self._engine.commands.items():
-            short_name = data.get("properties").get("short_name")
-            callback = data.get("callback")
-            is_context_submenu_option = data.get("properties").get("type") == "context_menu"
-            callback_invoker, callback_invoker_name = self._build_callback_invoker(callback=callback,
-                                                                                   short_name=short_name)
-            if 'app' in data.get("properties"):
-                app = data.get("properties").get("app")
-                app_name = app.name
-                app_display_name = app.display_name
+        # Apps
+        apps = self._create_apps(options)
+        for label, is_submenu, data in apps:
+            if is_submenu:
+                root_menu.addMenu(data)
             else:
-                app_name = None
-                app_display_name = None
+                caption, callback = data
+                root_menu.addAction(caption, callback)
 
-            kwargs = dict(option_type="item",
-                          option_id=short_name,
-                          caption=caption,
-                          callback_invoker_name=callback_invoker_name,
-                          app_name=app_name,
-                          app_display_name=app_display_name,
-                          is_context_submenu_option=is_context_submenu_option)
-            self.raw_options.append(MenuOption(**kwargs))
+        actions = menubar.actions()
+        menubar.insertMenu(actions[-1], root_menu)
 
-    def _build_callback_invoker(self, callback, short_name):
-        """
-        Creates a dynamic method inside this class.
+    def _create_context_submenu(self, options):
+        submenu = QtGui.QMenu()
+        submenu.setTitle(self.context_name)
 
-        The dynamic method allows invoking the callback by its name.
+        submenu.addAction(self.JUMP_TO_SG_TEXT, self.jump_to_sg)
+        submenu.addAction(self.JUMP_TO_FS_TEXT, self.jump_to_fs)
+        submenu.addSeparator()
 
-        :param callback: function to be called when the method is invoked
-        :param short_name: method name
-        :return: the new method object
-        """
-        def callback_invoker():
-            callback()
+        filtered_options = [(caption, data) for caption, data in options
+                            if data.get("properties").get("type") == "context_menu"]
 
-        callback_invoker_name = "invoke_{}".format(short_name)
-        callback_invoker.__name__ = callback_invoker_name
-        setattr(self, callback_invoker_name, callback_invoker)
+        for caption, data in filtered_options:
+            callback = data.get("callback")
+            submenu.addAction(caption, callback)
 
-        return callback_invoker, callback_invoker_name
+        return submenu
 
-    def _create_context_submenu(self):
-        """Creates context submenu."""
-        self.logger.debug("Creating context submenu")
-
-        # filter raw options
-        submenu_options = list(filter(lambda option: option.is_context_submenu_option, self.raw_options))
-
-        # add Jump to Shotgun option
-        kwargs = dict(option_id="jump_to_sg",
-                      caption="Jump to Shotgun",
-                      callback_invoker_name=self.jump_to_sg.__name__,
-                      is_context_submenu_option=True)
-        submenu_options.append(MenuOption(**kwargs))
-
-        # add Jump to File System option
-        kwargs = dict(option_id="jump_to_fs",
-                      caption="Jump to File System",
-                      callback_invoker_name=self.jump_to_fs.__name__,
-                      is_context_submenu_option=True)
-        submenu_options.append(MenuOption(**kwargs))
-
-        # create submenu
-        submenu = self._create_submenu(caption=self.context_name, submenu_options=submenu_options)
-
-        # add to options
-        self.options.append(submenu)
-
-    def _create_favourites_options(self):
-        """Creates favourites options."""
-        favourites_options = []
+    def _create_favourites(self, options):
+        favourites = []
 
         for favourite in self._engine.get_setting("menu_favourites"):
             app_instance = favourite["app_instance"]
             name = favourite["name"]
 
-            # filter raw_options
-            favourites_options += list(filter(
-                lambda option: option.app_name == app_instance and option.caption == name, self.raw_options))
+            for caption, data in options:
+                if data.get("properties").get("type") == "context_menu":
+                    continue
 
-        # add to options
-        if favourites_options:
-            favourites_options[0].has_separator = True
-            self.options += favourites_options
+                if 'app' in data.get("properties"):
+                    app_name = data.get("properties").get("app").name
 
-    def _create_apps_options(self):
-        """Creates applications menu options."""
+                    if caption == name and app_name == app_instance:
+                        callback = data.get("callback")
+                        favourites.append((caption, callback))
+
+        return favourites
+
+    def _create_apps(self, options):
+        # Apps to display in the bottom of the menu
+        # i.e.: bottom_apps[('tk-multi-autoabout', self.ABOUT_MENU_TEXT)] = []
+        bottom_apps = OrderedDict()
+
         favourites = [(favourite["app_instance"], favourite["name"])
                       for favourite in self._engine.get_setting("menu_favourites")]
 
-        # filter raw_options
-        filtered_raw_options = filter(lambda option: not option.is_context_submenu_option, self.raw_options)
+        filtered_options = [(caption, data) for caption, data in options
+                            if data.get("properties").get("type") != "context_menu"]
 
-        groups = OrderedDict()
-        for option in filtered_raw_options:
-            app_name = option.app_name
+        # group filtered options per app
+        options_x_app = {}
+        for caption, data in filtered_options:
+            callback = data.get("callback")
+            app_name = None
+            app_display_name = None
+            if 'app' in data.get("properties"):
+                app_name = data.get("properties").get("app").name
+                app_display_name = data.get("properties").get("app").display_name
 
-            if app_name not in groups:
-                groups[app_name] = []
+            key = (app_name, app_display_name)
 
-            groups[app_name].append(option)
+            if key in bottom_apps:
+                bottom_apps[key].append((caption, callback))
+                continue
 
-        apps_options = []
-        for app_name, options in groups.items():
+            if key not in options_x_app:
+                options_x_app[key] = []
+
+            options_x_app[key].append((caption, callback))
+
+        apps = []
+
+        if options_x_app:
+            apps += self._parse_options_x_app(options_x_app, favourites)
+
+        if bottom_apps:
+            apps += self._parse_options_x_app(bottom_apps, favourites, sort_options=False)
+
+        return apps
+
+    def _parse_options_x_app(self, groups, favourites, sort_options=True):
+        parsed_options = []
+
+        for (app_name, app_display_name), options in groups.items():
             first_option = options[0]
+            caption = first_option[0]
+            callback = first_option[1]
             options_number = len(options)
 
-            if options_number > 1:
-                app_display_name = first_option.app_display_name
-                apps_options.append(self._create_submenu(app_display_name, options))
-            elif options_number == 1 and (first_option.app_name, first_option.caption) not in favourites:
-                apps_options.append(first_option)
+            if options_number <= 0:
+                continue
 
-        self._sort_options(apps_options)
+            if options_number == 1 and (app_name, caption) not in favourites:
+                is_submenu = False
+                data = caption, callback
+                label = caption
+            else:
+                is_submenu = True
+                label = app_display_name
 
-        if apps_options:
-            apps_options[0].has_separator = True
-            self.options += apps_options
+                data = QtGui.QMenu()
+                data.setTitle(app_display_name)
+                for caption, callback in options:
+                    data.addAction(caption, callback)
 
-    def _create_submenu(self, caption, submenu_options, sort_options=True, has_separator=False):
-        """Creates submenu tuple."""
+            parsed_options.append((label, is_submenu, data))
+
         if sort_options:
-            self._sort_options(submenu_options)
-        return MenuOption(option_type="submenu", caption=caption, options=submenu_options, has_separator=has_separator)
+            parsed_options.sort(key=lambda option: option[0])
 
-    @staticmethod
-    def _sort_options(options_to_sort):
-        """Sort options by caption."""
-        options_to_sort.sort(key=lambda option: option.caption)
+        return parsed_options
 
     @property
     def context_name(self):
@@ -211,33 +208,7 @@ class SketchBookMenu(object):
             self._engine.logger.debug("Jump to filesystem command: {}".format(cmd))
 
             exit_code = os.system(cmd)
+
             if exit_code != 0:
-                self._engine.logger.error("Failed to launch '%s'!", cmd)
+                self.logger.error("Failed to launch '%s'!", cmd)
 
-
-class MenuOption(object):
-    def __init__(self, **kwargs):
-        self.option_type = kwargs.get("option_type", "item")
-        self.caption = kwargs.get("caption", None)
-        self.option_id = kwargs.get("option_id", None)
-        self.callback_invoker_name = kwargs.get("callback_invoker_name", None)
-        self.is_context_submenu_option = kwargs.get("is_context_submenu_option", None)
-        self.app_name = kwargs.get("app_name", None)
-        self.app_display_name = kwargs.get("app_display_name", None)
-        self.options = kwargs.get("options", None)
-        self.has_separator = kwargs.get("has_separator", False)
-
-    def __str__(self):
-        return self.as_string
-
-    def __repr__(self):
-        return self.as_string
-
-    @property
-    def as_string(self):
-        if self.option_type == "item":
-            return "<{}, {}, {}>".format(self.option_type, self.caption, self.has_separator)
-        elif self.option_type == "submenu":
-            return "<{}, {}, {}, [{}]>".format(self.option_type, self.caption, self.has_separator, self.options)
-
-        return self.caption
