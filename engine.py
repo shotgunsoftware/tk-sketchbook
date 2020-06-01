@@ -43,6 +43,16 @@ class SketchBookEngine (Engine):
     def destroy_engine (self):
         self.logger.debug ("%s: Destroying...", self)
 
+        # Close all Shotgun app dialogs that are still opened since
+        # some apps do threads cleanup in their onClose event handler
+        # Note that this function is called when the engine is restarted (through "Reload Engine and Apps")
+
+        # Important: Copy the list of dialogs still opened since the call to close() will modify created_qt_dialogs
+        dialogs_still_opened = self.created_qt_dialogs[:]
+
+        for dialog in dialogs_still_opened:
+            dialog.close ()
+
     def pre_app_init (self):
         self.logger.debug ("%s: Pre app init..." % (self,))
 
