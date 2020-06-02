@@ -69,14 +69,14 @@ class SceneOperation(HookClass):
 
         if operation == "current_path":
             # return the current scene path
-            return sketchbook_api(get_current_path)
+            return sketchbook_api.get_current_path()
         elif operation == "open":
-            # do new scene as Maya doesn't like opening
-            pass
+            # open a given file
+            return sketchbook_api.open_file(file_path)
         elif operation == "save":
             # save the current scene:
             #
-            pass
+            return sketchbook_api.save_file()
         elif operation == "save_as":
             # first rename the scene as file_path:
             #
@@ -127,4 +127,4 @@ class SceneOperation(HookClass):
             # # do new file:
             # cmds.file(newFile=True, force=True)
             # return True
-            pass
+            return True
