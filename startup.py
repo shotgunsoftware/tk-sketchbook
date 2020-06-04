@@ -76,7 +76,9 @@ class SketchbookLauncher(SoftwareLauncher):
         """
         sbpPath = self.sketchBookPath ()
         icon_path = os.path.join (self.disk_location, "SketchBook.png")
-        return [ SoftwareVersion ('2020', 'SketchBook', sbpPath, icon_path) ]
+        appName = 'SketchBook Pro' if 'Pro' in sbpPath else 'SketchBook'
+        version = '2020' if 'Autodesk' in sbpPath else 'FREE'
+        return [ SoftwareVersion (version, appName, sbpPath, icon_path) ]
 
     def sketchBookPath(self):
         if is_macos():
@@ -92,13 +94,20 @@ class SketchbookLauncher(SoftwareLauncher):
 
             sbpPath = paths [0] if len (paths) > 0 else ''
 
-        self.startLog ('2Found SketchBook at ' + sbpPath)
+        self.startLog ('Found SketchBook at ' + sbpPath)
         return sbpPath
 
     def macAppPath(self):
-        found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "com.autodesk.SketchBook"'])
-        paths = found.strip ().split ()
+        paths = self.macAppPathForBundleID ('com.autodesk.SketchBook')
+
+        if not len (paths):
+        	paths = self.macAppPathForBundleID ('com.autodesk.SketchBookPro')
+
         return paths [0] if len (paths) else ''
+    
+    def macAppPathForBundleID(self, bundleID):
+        found = subprocess.check_output (['mdfind', 'kMDItemCFBundleIdentifier = "%s"' % bundleID])
+        return found.strip ().split ()
 
     def windowsExePath(self, directory):
         paths = ''
