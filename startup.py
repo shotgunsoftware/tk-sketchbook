@@ -77,7 +77,7 @@ class SketchbookLauncher(SoftwareLauncher):
         sbpPath = self.sketchBookPath ()
         icon_path = os.path.join (self.disk_location, "SketchBook.png")
         appName = 'SketchBook Pro' if 'Pro' in sbpPath else 'SketchBook'
-        version = '2020' if 'Autodesk' in sbpPath else 'FREE'
+        version = '2020' if 'Pro' in sbpPath else ' '
         return [ SoftwareVersion (version, appName, sbpPath, icon_path) ]
 
     def sketchBookPath(self):
