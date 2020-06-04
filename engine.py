@@ -88,9 +88,9 @@ class SketchBookEngine (Engine):
         self.logger.debug ("Returning command list %s.", result)
         sketchbook_api.set_commands (result)
 
-    def _get_standard_qt_stylesheet(self):
-        with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
-            return f.read ()
+    # def _get_standard_qt_stylesheet(self):
+    #    with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
+    #        return f.read ()
 
     def run_command (self, commandName):
         self.logger.debug ("Running command %s.", commandName)
