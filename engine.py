@@ -28,7 +28,7 @@ logger = sgtk.LogManager.get_logger(__name__)
 class SketchBookEngine (Engine):
     @property
     def host_info (self):
-        return { "name": "SketchBook", "version": "2020" }
+        return sketchbook_api.host_info ()
 
     def __init__(self, tk, context, engine_instance_name, env):
         super (SketchBookEngine, self).__init__(tk, context, engine_instance_name, env)
