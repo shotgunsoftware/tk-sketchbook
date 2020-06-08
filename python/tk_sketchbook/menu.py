@@ -24,16 +24,31 @@ class SketchBookMenu(object):
     ABOUT_MENU_TEXT = "About Shotgun Pipeline Toolkit"
     JUMP_TO_SG_TEXT = "Jump to Shotgun"
     JUMP_TO_FS_TEXT = "Jump to File System"
+    SEPARATOR_ITEM = "_SEPARATOR_"
 
     def __init__(self, engine):
-        """Initialize attributes."""
-        # engine instance
         self._engine = engine
         self.logger = self._engine.logger
 
     def create(self):
         self.logger.info("Creating Shotgun Menu")
-
+        menuItems = []
+        
+        names = list (self._engine.commands.keys ())
+        menuItems.append (self.createContextSubmenu (names))
+        menuItems.append ([self.SEPARATOR_ITEM, []])
+        menuItems.extend ([[name, []] for name in names])
+        self.logger.debug ("Setting menu data to %s.", menuItems)
+        return menuItems
+        # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
+    
+    def createContextSubmenu (self, names):
+    	return [self.context_name, [self.JUMP_TO_SG_TEXT, self.SEPARATOR_ITEM, self.JUMP_TO_FS_TEXT]]
+    
+    
+    
+    
+    def other(self):
         # Get all options and sort them
         options = [(caption, data) for caption, data in self._engine.commands.items()]
         if options:
@@ -174,8 +189,9 @@ class SketchBookMenu(object):
 
     @property
     def context_name(self):
-        """Returns the context name used by the context submenu caption."""
-        return str(self._engine.context).decode("utf-8")
+        self.logger.info("Considering project %s", self._engine.context.project)
+
+        return self._engine.context.project ['name']
 
     def jump_to_sg(self):
         """
