@@ -83,10 +83,12 @@ class SketchBookEngine (Engine):
 
         self.logger.debug ("Installed commands are %s.", self.commands)
 
-    def fetch_command_names (self):
-        result = list (self.commands.keys ())
-        self.logger.debug ("Returning command list %s.", result)
-        sketchbook_api.set_commands (result)
+    def refresh_menu (self):
+        names = list (self.commands.keys ())
+        result = [[name, []] for name in names]
+        self.logger.debug ("Setting menu data to %s.", result)
+        sketchbook_api.refresh_menu (result)
+        # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
 
     # def _get_standard_qt_stylesheet(self):
     #    with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
