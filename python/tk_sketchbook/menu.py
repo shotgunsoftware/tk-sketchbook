@@ -30,163 +30,35 @@ class SketchBookMenu(object):
         self._engine = engine
         self.logger = self._engine.logger
 
-    def create(self):
-        self.logger.info("Creating Shotgun Menu")
-        menuItems = []
-        
-        names = list (self._engine.commands.keys ())
-        menuItems.append (self.createContextSubmenu (names))
-        menuItems.append ([self.SEPARATOR_ITEM, []])
-        menuItems.extend ([[name, []] for name in names])
-        self.logger.debug ("Setting menu data to %s.", menuItems)
+    def create (self):
+        self.logger.info ("Creating Shotgun Menu")
+        menuItems = [self.createContextSubmenu (), [self.SEPARATOR_ITEM, []]]
+        menuItems.extend (self.createAppsEntries ())
+        self.logger.debug ("Setting menu items to %s.", menuItems)
         return menuItems
         # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
     
-    def createContextSubmenu (self, names):
-    	return [self.context_name, [self.JUMP_TO_SG_TEXT, self.SEPARATOR_ITEM, self.JUMP_TO_FS_TEXT]]
+    def createContextSubmenu (self):
+        names = [self.JUMP_TO_SG_TEXT, self.JUMP_TO_FS_TEXT, self.SEPARATOR_ITEM]
+        names.extend ([name for name, data in self._engine.commands.items ()
+                if data.get("properties").get("type") == "context_menu"])
+        return [self.context_name, names]
     
+    def createAppsEntries (self):
+        return [[name, []] for name, data in self._engine.commands.items ()
+                if data.get("properties").get("type") != "context_menu"]
     
+    def doCommand (self, commandName):
+        self.logger.debug ("Running command %s.", commandName)
+        
+        if commandName == self.JUMP_TO_SG_TEXT:
+            self.jump_to_sg ()
+        elif commandName == self.JUMP_TO_FS_TEXT:
+            self.jump_to_fs ()
+        elif self._engine.commands [commandName]:
+            if self._engine.commands [commandName] ['callback']:
+                self._engine.commands [commandName] ['callback'] ();
     
-    
-    def other(self):
-        # Get all options and sort them
-        options = [(caption, data) for caption, data in self._engine.commands.items()]
-        if options:
-            options.sort(key=lambda option: option[0])
-
-        # Context submenu
-        root_menu.addMenu(self._create_context_submenu(options))
-        root_menu.addSeparator()
-
-        # Favourites
-        favourites = self._create_favourites(options)
-        [root_menu.addAction(caption, callback) for caption, callback in favourites]
-        if favourites:
-            root_menu.addSeparator()
-
-        # Apps
-        apps = self._create_apps(options)
-        for label, is_submenu, data in apps:
-            if is_submenu:
-                root_menu.addMenu(data)
-            else:
-                caption, callback = data
-                root_menu.addAction(caption, callback)
-
-        actions = menubar.actions()
-        menubar.insertMenu(actions[-1], root_menu)
-
-    def _create_context_submenu(self, options):
-        submenu = QtGui.QMenu()
-        submenu.setTitle(self.context_name)
-
-        submenu.addAction(self.JUMP_TO_SG_TEXT, self.jump_to_sg)
-        submenu.addAction(self.JUMP_TO_FS_TEXT, self.jump_to_fs)
-        submenu.addSeparator()
-
-        filtered_options = [(caption, data) for caption, data in options
-                            if data.get("properties").get("type") == "context_menu"]
-
-        for caption, data in filtered_options:
-            callback = data.get("callback")
-            submenu.addAction(caption, callback)
-
-        return submenu
-
-    def _create_favourites(self, options):
-        favourites = []
-
-        for favourite in self._engine.get_setting("menu_favourites"):
-            app_instance = favourite["app_instance"]
-            name = favourite["name"]
-
-            for caption, data in options:
-                if data.get("properties").get("type") == "context_menu":
-                    continue
-
-                if 'app' in data.get("properties"):
-                    app_name = data.get("properties").get("app").name
-
-                    if caption == name and app_name == app_instance:
-                        callback = data.get("callback")
-                        favourites.append((caption, callback))
-
-        return favourites
-
-    def _create_apps(self, options):
-        # Apps to display in the bottom of the menu
-        # i.e.: bottom_apps[('tk-multi-autoabout', self.ABOUT_MENU_TEXT)] = []
-        bottom_apps = OrderedDict()
-
-        favourites = [(favourite["app_instance"], favourite["name"])
-                      for favourite in self._engine.get_setting("menu_favourites")]
-
-        filtered_options = [(caption, data) for caption, data in options
-                            if data.get("properties").get("type") != "context_menu"]
-
-        # group filtered options per app
-        options_x_app = {}
-        for caption, data in filtered_options:
-            callback = data.get("callback")
-            app_name = None
-            app_display_name = None
-            if 'app' in data.get("properties"):
-                app_name = data.get("properties").get("app").name
-                app_display_name = data.get("properties").get("app").display_name
-
-            key = (app_name, app_display_name)
-
-            if key in bottom_apps:
-                bottom_apps[key].append((caption, callback))
-                continue
-
-            if key not in options_x_app:
-                options_x_app[key] = []
-
-            options_x_app[key].append((caption, callback))
-
-        apps = []
-
-        if options_x_app:
-            apps += self._parse_options_x_app(options_x_app, favourites)
-
-        if bottom_apps:
-            apps += self._parse_options_x_app(bottom_apps, favourites, sort_options=False)
-
-        return apps
-
-    def _parse_options_x_app(self, groups, favourites, sort_options=True):
-        parsed_options = []
-
-        for (app_name, app_display_name), options in groups.items():
-            first_option = options[0]
-            caption = first_option[0]
-            callback = first_option[1]
-            options_number = len(options)
-
-            if options_number <= 0:
-                continue
-
-            if options_number == 1 and (app_name, caption) not in favourites:
-                is_submenu = False
-                data = caption, callback
-                label = caption
-            else:
-                is_submenu = True
-                label = app_display_name
-
-                data = QtGui.QMenu()
-                data.setTitle(app_display_name)
-                for caption, callback in options:
-                    data.addAction(caption, callback)
-
-            parsed_options.append((label, is_submenu, data))
-
-        if sort_options:
-            parsed_options.sort(key=lambda option: option[0])
-
-        return parsed_options
-
     @property
     def context_name(self):
         self.logger.info("Considering project %s", self._engine.context.project)
@@ -202,7 +74,7 @@ class SketchBookMenu(object):
 
     def jump_to_fs(self):
         """
-        Jump from context to FS
+        Jump from context to File System
         """
         # launch one window for each location on disk
         paths = self._engine.context.filesystem_locations

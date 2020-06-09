@@ -88,12 +88,7 @@ class SketchBookEngine (Engine):
     #        return f.read ()
 
     def run_command (self, commandName):
-        self.logger.debug ("Running command %s.", commandName)
-
-        if self.commands [commandName]:
-            if self.commands [commandName] ['callback']:
-                self.commands [commandName] ['callback'] ();
-
+        self.menu.doCommand (commandName)
 
     def post_context_change (self, old_context, new_context):
         self.logger.debug ("%s: Post context change...", self)
