@@ -28,17 +28,11 @@ logger = sgtk.LogManager.get_logger(__name__)
 class SketchBookEngine (Engine):
     @property
     def host_info (self):
-        return { "name": "SketchBook", "version": "2020" }
+        self.logger.debug ("%s: Fetching host info...", self)
+        return sketchbook_api.host_info ()
 
     def __init__(self, tk, context, engine_instance_name, env):
         super (SketchBookEngine, self).__init__(tk, context, engine_instance_name, env)
-        self.logger.debug ("%s: Initializing...", self)
-        self._menu_name = "Shotgun"
-        self._tk_sketchbook = None
-        self._qt_app = None
-        self._dialog_parent = None
-        self.menu = None
-        self.operations = None
 
     def destroy_engine (self):
         self.logger.debug ("%s: Destroying...", self)
@@ -77,55 +71,29 @@ class SketchBookEngine (Engine):
 
         # init menu
         self.menu = self._tk_sketchbook.SketchBookMenu (engine=self)
-
-        # init operations
-        self.operations = self._tk_sketchbook
+        self.logger.debug ("Got menu %s", self.menu)
 
         self.logger.debug ("Installed commands are %s.", self.commands)
-
-    def fetch_command_names (self):
-        result = list (self.commands.keys ())
-        self.logger.debug ("Returning command list %s.", result)
-        sketchbook_api.set_commands (result)
-
-    def _get_standard_qt_stylesheet(self):
-        with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
-            return f.read ()
-
-    def run_command (self, commandName):
-        self.logger.debug ("Running command %s.", commandName)
-
-        if self.commands [commandName]:
-            if self.commands [commandName] ['callback']:
-                self.commands [commandName] ['callback'] ();
-
-    def on_plugin_init (self):
-        self.logger.debug("Plugin initialized signal received")
-
-        # Create menu
-        self._create_menu()
 
         path = os.environ.get ("SGTK_FILE_TO_OPEN", None)
         if path:
             self.operations.open_file (path)
 
-    def on_plugin_exit (self):
-        self.operations.current_file_closed ()
+    def refresh_menu (self):
+        self.logger.debug ("Refreshing with menu object %s.", self.menu)
+        sketchbook_api.refresh_menu (self.menu.create ())
 
+    # def _get_standard_qt_stylesheet(self):
+    #    with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
+    #        return f.read ()
+
+    def run_command (self, commandName):
+        self.menu.doCommand (commandName)
 
     def post_context_change (self, old_context, new_context):
         self.logger.debug ("%s: Post context change...", self)
         if self.context_change_allowed:
-            self._create_menu ()
-
-    def _create_menu (self):
-        # self.logger.debug ("Creating menu")
-        # self.menu.create ()
-
-        # self.logger.debug ("Raw menu options: {}".format (self.menu.raw_options))
-        # self.logger.debug ("Menu options: {}".format (self.menu.options))
-        # sketchbook_api.create_menu (self.menu.options)
-        pass
+            self.refresh_menu ()
 
 
     def _emit_log_message (self, handler, record):
