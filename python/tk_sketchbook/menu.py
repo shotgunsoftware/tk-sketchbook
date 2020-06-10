@@ -50,7 +50,7 @@ class SketchBookMenu(object):
 
     def doCommand(self, commandName):
         self.logger.debug("Running command %s.", commandName)
-        
+
         if commandName == self.JUMP_TO_SG_TEXT:
             self.jump_to_sg()
         elif commandName == self.JUMP_TO_FS_TEXT:
@@ -99,4 +99,3 @@ class SketchBookMenu(object):
 
             if exit_code != 0:
                 self.logger.error("Failed to launch '%s'!", cmd)
-

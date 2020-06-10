@@ -104,7 +104,7 @@ class SketchbookLauncher(SoftwareLauncher):
             paths = self.macAppPathForBundleID('com.autodesk.SketchBookPro')
 
         return paths [0] if len (paths) else ''
-    
+
     def macAppPathForBundleID(self, bundleID):
         found = subprocess.check_output(['mdfind', 'kMDItemCFBundleIdentifier = "%s"' % bundleID])
         return found.strip().split()
