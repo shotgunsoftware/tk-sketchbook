@@ -30,40 +30,40 @@ class SketchBookMenu(object):
         self._engine = engine
         self.logger = self._engine.logger
 
-    def create (self):
-        self.logger.info ("Creating Shotgun Menu")
-        menuItems = [self.createContextSubmenu (), [self.SEPARATOR_ITEM, []]]
-        menuItems.extend (self.createAppsEntries ())
-        self.logger.debug ("Setting menu items to %s.", menuItems)
+    def create(self):
+        self.logger.info("Creating Shotgun Menu")
+        menuItems = [self.createContextSubmenu(), [self.SEPARATOR_ITEM, []]]
+        menuItems.extend(self.createAppsEntries())
+        self.logger.debug("Setting menu items to %s.", menuItems)
         return menuItems
         # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
-    
-    def createContextSubmenu (self):
+
+    def createContextSubmenu(self):
         names = [self.JUMP_TO_SG_TEXT, self.JUMP_TO_FS_TEXT, self.SEPARATOR_ITEM]
-        names.extend ([name for name, data in self._engine.commands.items ()
+        names.extend ([name for name, data in self._engine.commands.items()
                 if data.get("properties").get("type") == "context_menu"])
         return [self.context_name, names]
-    
-    def createAppsEntries (self):
-        return [[name, []] for name, data in self._engine.commands.items ()
+
+    def createAppsEntries(self):
+        return [[name, []] for name, data in self._engine.commands.items()
                 if data.get("properties").get("type") != "context_menu"]
-    
-    def doCommand (self, commandName):
-        self.logger.debug ("Running command %s.", commandName)
+
+    def doCommand(self, commandName):
+        self.logger.debug("Running command %s.", commandName)
         
         if commandName == self.JUMP_TO_SG_TEXT:
-            self.jump_to_sg ()
+            self.jump_to_sg()
         elif commandName == self.JUMP_TO_FS_TEXT:
-            self.jump_to_fs ()
-        elif self._engine.commands [commandName]:
-            if self._engine.commands [commandName] ['callback']:
-                self._engine.commands [commandName] ['callback'] ();
-    
+            self.jump_to_fs()
+        elif self._engine.commands[commandName]:
+            if self._engine.commands[commandName]['callback']:
+                self._engine.commands[commandName]['callback']();
+
     @property
     def context_name(self):
         self.logger.info("Considering project %s", self._engine.context.project)
 
-        return self._engine.context.project ['name']
+        return self._engine.context.project['name']
 
     def jump_to_sg(self):
         """
