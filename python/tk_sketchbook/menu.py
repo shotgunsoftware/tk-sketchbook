@@ -30,8 +30,17 @@ class SketchBookMenu(object):
         self._engine = engine
         self.logger = self._engine.logger
 
+    @property
+    def context_name(self):
+        return str(self._engine.context)
+
     def create(self):
-        self.logger.info("Creating Shotgun Menu")
+        """
+        Render the entire Shotgun menu.
+        """
+
+        self.logger.debug("Creating Shotgun Menu")
+
         menuItems = [self.createContextSubmenu(), [self.SEPARATOR_ITEM, []]]
         menuItems.extend(self.createAppsEntries())
         self.logger.debug("Setting menu items to %s.", menuItems)
@@ -58,12 +67,6 @@ class SketchBookMenu(object):
         elif self._engine.commands[commandName]:
             if self._engine.commands[commandName]['callback']:
                 self._engine.commands[commandName]['callback']();
-
-    @property
-    def context_name(self):
-        self.logger.info("Considering project %s", self._engine.context.project)
-
-        return self._engine.context.project['name']
 
     def jump_to_sg(self):
         """

@@ -66,11 +66,12 @@ class SketchBookEngine (Engine):
         from sgtk.platform.qt import QtGui
         self._qt_app = QtGui.QApplication.instance ()
 
-        # import python/tk_alias module
+        # import python/tk_sketchbook module
         self._tk_sketchbook = self.import_module ("tk_sketchbook")
 
         # init menu
         self.menu = self._tk_sketchbook.SketchBookMenu (engine=self)
+        self.refresh_menu()
         self.logger.debug ("Got menu %s", self.menu)
 
         self.logger.debug ("Installed commands are %s.", self.commands)
@@ -79,9 +80,9 @@ class SketchBookEngine (Engine):
         if path:
             self.operations.open_file (path)
 
-    def refresh_menu (self):
-        self.logger.debug ("Refreshing with menu object %s.", self.menu)
-        sketchbook_api.refresh_menu (self.menu.create ())
+    def refresh_menu(self):
+        self.logger.debug("Refreshing with menu object %s.", self.menu)
+        sketchbook_api.refresh_menu(self.menu.create())
 
     # def _get_standard_qt_stylesheet(self):
     #    with open (os.path.join (self.disk_location, "sketchbook_lighter.css")) as f:
@@ -90,10 +91,16 @@ class SketchBookEngine (Engine):
     def run_command (self, commandName):
         self.menu.doCommand (commandName)
 
-    def post_context_change (self, old_context, new_context):
-        self.logger.debug ("%s: Post context change...", self)
+    def post_context_change(self, old_context, new_context):
+        """
+        Runs after a context change has occurred.
+        :param old_context: The previous context.
+        :param new_context: The current context.
+        """
+        self.logger.debug("%s: Post context change...", self)
         if self.context_change_allowed:
-            self.refresh_menu ()
+            self.logger.debug("Refreshing with menu object %s.", self.menu)
+            sketchbook_api.refresh_menu(self.menu.create())
 
 
     def _emit_log_message (self, handler, record):
@@ -104,3 +111,10 @@ class SketchBookEngine (Engine):
 
         msg = formatter.format (record)
         SketchBookLogger.logMessage (msg)
+
+    @property
+    def context_change_allowed(self):
+        """
+        Specifies that context changes are allowed by the engine.
+        """
+        return True
