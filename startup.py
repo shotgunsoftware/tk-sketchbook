@@ -77,7 +77,7 @@ class SketchbookLauncher(SoftwareLauncher):
         sbpPath = self.sketchBookPath()
         icon_path = os.path.join(self.disk_location, "SketchBook.png")
         appName = 'SketchBook Pro' if 'Pro' in sbpPath else 'SketchBook'
-        version = '2020' if 'Pro' in sbpPath else ' '
+        version = '2021.1' if 'Pro' in sbpPath else ' '
         return [ SoftwareVersion(version, appName, sbpPath, icon_path) ]
 
     def sketchBookPath(self):
@@ -107,7 +107,7 @@ class SketchbookLauncher(SoftwareLauncher):
 
     def macAppPathForBundleID(self, bundleID):
         found = subprocess.check_output(['mdfind', 'kMDItemCFBundleIdentifier = "%s"' % bundleID])
-        return found.strip().split()
+        return found.strip().splitlines()
 
     def windowsExePath(self, directory):
         paths = ''

@@ -118,3 +118,33 @@ class SketchBookEngine (Engine):
         Specifies that context changes are allowed by the engine.
         """
         return True
+
+    def refresh_context():
+        logger.debug("Refreshing the context")
+
+        # Get the path of the current open Maya scene file.
+        new_path = sketchbook_api.current_file_path()
+
+        if new_path is None:
+            # This is a File->New call, so we just leave the engine in the current
+            # context and move on.
+            logger.debug("New file call, aborting the refresh of the engine.")
+            return
+
+        # this file could be in another project altogether, so create a new
+        # API instance.
+        try:
+            tk = sgtk.sgtk_from_path(new_path)
+            logger.debug("Extracted sgtk instance: '%r' from path: '%r'", tk, new_path)
+
+        except sgtk.TankError as e:
+            logger.exception("Could not execute sgtk_from_path('%s')" % new_path)
+            return
+
+        # Construct a new context for this path:
+        ctx = tk.context_from_path(new_path, self.context)
+        logger.debug("Context for path %s is %r", new_path, ctx)
+
+        if ctx != self.context:
+            logger.debug("Changing the context to '%r", ctx)
+            self.change_context(ctx)
