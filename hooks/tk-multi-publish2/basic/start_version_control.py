@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,17 +6,18 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 import os
 import sgtk
+import sketchbook_api
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchBookStartVersionControlPlugin(HookBaseClass):
+class SketchbookStartVersionControlPlugin(HookBaseClass):
     """
-    Simple plugin to insert a version number into the file path if one
+    Simple plugin to insert a version number into the sketchbook file path if one
     does not exist.
     """
 
@@ -122,21 +123,21 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
             version_number = self._get_version_number(path, item)
             if version_number is not None:
                 self.logger.info(
-                    "SketchBook '%s' plugin rejected the current session..." % (self.name,)
+                    "Sketchbook '%s' plugin rejected the current session..." % (self.name,)
                 )
                 self.logger.info("  There is already a version number in the file...")
-                self.logger.info("  SketchBook file path: %s" % (path,))
+                self.logger.info("  Sketchbook file path: %s" % (path,))
                 return {"accepted": False}
         else:
             # the session has not been saved before (no path determined).
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The SketchBook session has not been saved.", extra=_get_save_as_action()
+                "The Sketchbook session has not been saved.", extra=_get_save_as_action()
             )
 
         self.logger.info(
-            "SketchBook '%s' plugin accepted the current session." % (self.name,),
+            "Sketchbook '%s' plugin accepted the current session." % (self.name,),
             extra=_get_version_docs_action(),
         )
 
@@ -164,7 +165,7 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
         if not path:
             # the session still requires saving. provide a save button.
             # validation fails
-            error_msg = "The SketchBook session has not been saved."
+            error_msg = "The Sketchbook session has not been saved."
             self.logger.error(error_msg, extra=_get_save_as_action())
             raise Exception(error_msg)
 
@@ -197,22 +198,21 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
         """
 
         publisher = self.parent
-        operations = publisher.engine.operations
 
         # get the path in a normalized state. no trailing separator, separators
         # are appropriate for current os, no double separators, etc.
         path = sgtk.util.ShotgunPath.normalize(_session_path())
 
         # ensure the session is saved in its current state
-        operations.save_file(operations.get_current_path())
+        sketchbook_api.save_file()
 
         # get the path to a versioned copy of the file.
         version_path = publisher.util.get_version_path(path, "v001")
 
         # save to the new version path
-        operations.save_file(version_path)
-        self.logger.info("A version number has been added to the file...")
-        self.logger.info("  File path: %s" % (version_path,))
+        sketchbook_api.save_file_as(version_path)
+        self.logger.info("A version number has been added to the Sketchbook file...")
+        self.logger.info("  Sketchbook file path: %s" % (version_path,))
 
     def finalize(self, settings, item):
         """
@@ -269,10 +269,8 @@ def _session_path():
     Return the path to the current session
     :return:
     """
-    engine = sgtk.platform.current_engine()
-    operations = engine.operations
 
-    return operations.get_current_path()
+    return sketchbook_api.get_current_path()
 
 
 def _get_save_as_action():
@@ -282,10 +280,9 @@ def _get_save_as_action():
     """
 
     engine = sgtk.platform.current_engine()
-    operations = engine.operations
 
     # default save callback
-    callback = operations.open_save_as_dialog
+    callback = engine.open_save_as_dialog
 
     # if workfiles2 is configured, use that for file save
     if "tk-multi-workfiles2" in engine.apps:

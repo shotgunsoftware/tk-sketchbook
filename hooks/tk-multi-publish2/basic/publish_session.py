@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,17 +6,18 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 import os
 import sgtk
+import sketchbook_api
 
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchBookSessionPublishPlugin(HookBaseClass):
+class SketchbookSessionPublishPlugin(HookBaseClass):
     """
-    Plugin for publishing an open alias session.
+    Plugin for publishing an open sketchbook session.
 
     This hook relies on functionality found in the base file publisher hook in
     the publish2 app and should inherit from it in the configuration. The hook
@@ -106,10 +107,10 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         """
 
         # inherit the settings from the base publish plugin
-        base_settings = super(SketchBookSessionPublishPlugin, self).settings or {}
+        base_settings = super(SketchbookSessionPublishPlugin, self).settings or {}
 
         # settings specific to this class
-        alias_publish_settings = {
+        sketchbook_publish_settings = {
             "Publish Template": {
                 "type": "template",
                 "default": None,
@@ -120,7 +121,7 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         }
 
         # update the base settings
-        base_settings.update(alias_publish_settings)
+        base_settings.update(sketchbook_publish_settings)
 
         return base_settings
 
@@ -174,11 +175,11 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The session has not been saved.", extra=_get_save_as_action()
+                "The Sketchbook session has not been saved.", extra=_get_save_as_action()
             )
 
         self.logger.info(
-            "SketchBook '%s' plugin accepted the current session." % (self.name,)
+            "Sketchbook '%s' plugin accepted the current Sketchbook session." % (self.name,)
         )
         return {"accepted": True, "checked": True}
 
@@ -195,7 +196,6 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         """
 
         publisher = self.parent
-        operations = publisher.engine.operations
         path = _session_path()
 
         # ---- ensure the session has been saved
@@ -203,7 +203,7 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         if not path:
             # the session still requires saving. provide a save button.
             # validation fails.
-            error_msg = "The session has not been saved."
+            error_msg = "The Sketchbook session has not been saved."
             self.logger.error(error_msg, extra=_get_save_as_action())
             raise Exception(error_msg)
 
@@ -226,7 +226,7 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
                     extra={
                         "action_button": {
                             "label": "Save File",
-                            "tooltip": "Save the current session to a "
+                            "tooltip": "Save the current Sketchbook session to a "
                             "different file name",
                             # will launch wf2 if configured
                             "callback": _get_save_as_action(),
@@ -261,7 +261,7 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
                         "label": "Save to v%s" % (version,),
                         "tooltip": "Save to the next available version number, "
                         "v%s" % (version,),
-                        "callback": lambda: operations.save_file(next_version_path),
+                        "callback": lambda: sketchbook_api.save_file_as(next_version_path),
                     }
                 },
             )
@@ -282,7 +282,7 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         item.properties["path"] = path
 
         # run the base class validation
-        return super(AliasSessionPublishPlugin, self).validate(settings, item)
+        return super(SketchbookSessionPublishPlugin, self).validate(settings, item)
 
     def publish(self, settings, item):
         """
@@ -293,25 +293,19 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
             instances.
         :param item: Item to process
         """
-        operations = self.parent.engine.operations
 
         # get the path in a normalized state. no trailing separator, separators
         # are appropriate for current os, no double separators, etc.
         path = sgtk.util.ShotgunPath.normalize(_session_path())
 
         # ensure the session is saved
-        operations.save_file(path)
+        sketchbook_api.save_file()
 
         # update the item with the saved session path
         item.properties["path"] = path
 
-        # add dependencies for the base class to register when publishing
-        item.properties[
-            "publish_dependencies"
-        ] = _alias_find_additional_session_dependencies()
-
         # let the base class register the publish
-        super(SketchBookSessionPublishPlugin, self).publish(settings, item)
+        super(SketchbookSessionPublishPlugin, self).publish(settings, item)
 
     def finalize(self, settings, item):
         """
@@ -324,40 +318,21 @@ class SketchBookSessionPublishPlugin(HookBaseClass):
         :param item: Item to process
         """
 
-        operations = self.parent.engine.operations
-
         # do the base class finalization
-        super(SketchBookSessionPublishPlugin, self).finalize(settings, item)
+        super(SketchbookSessionPublishPlugin, self).finalize(settings, item)
 
         # bump the session file to the next version
-        self._save_to_next_version(item.properties["path"], item, operations.save_file)
-
-
-def _alias_find_additional_session_dependencies():
-    """
-    Find additional dependencies from the session
-    """
-    engine = sgtk.platform.current_engine()
-    operations = engine.operations
-
-    references = []
-    for reference in operations.get_references():
-        path = reference.get("path")
-        if path not in references:
-            references.append(path)
-
-    return references
-
+        self._save_to_next_version(
+            item.properties["path"], item, sketchbook_api.save_file_as
+        )
 
 def _session_path():
     """
     Return the path to the current session
     :return:
     """
-    engine = sgtk.platform.current_engine()
-    operations = engine.operations
 
-    return operations.get_current_path()
+    return sketchbook_api.get_current_path()
 
 
 def _get_save_as_action():
@@ -366,10 +341,9 @@ def _get_save_as_action():
     """
 
     engine = sgtk.platform.current_engine()
-    operations = engine.operations
 
     # default save callback
-    callback = operations.open_save_as_dialog
+    callback = engine.open_save_as_dialog
 
     # if workfiles2 is configured, use that for file save
     if "tk-multi-workfiles2" in engine.apps:

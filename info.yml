@@ -1,4 +1,4 @@
-# Copyright (c) 2019 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,7 +6,7 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 # Metadata defining the behaviour and requirements for this engine
 
@@ -25,6 +25,22 @@ configuration:
                      app instance defined in the environment configuration file. The name
                      is a menu name to make a favourite."
         allows_empty: True
+        values:
+            type: dict
+            items:
+                name: { type: str }
+                app_instance: { type: str }
+
+    run_at_startup:
+        type: list
+        description: "Controls what apps will run on startup.  This is a list where each element
+                     is a dictionary with two keys: 'app_instance' and 'name'.  The app_instance
+                     value connects this entry to a particular app instance defined in the
+                     environment configuration file.  The name is the menu name of the command
+                     to run when the Sketchbook engine starts up.  If name is '' then all commands from the
+                     given app instance are started."
+        allows_empty: True
+        default_value: []
         values:
             type: dict
             items:
