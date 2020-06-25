@@ -80,7 +80,11 @@ class SketchBookEngine (Engine):
         if path:
             self.operations.open_file (path)
 
-        self._run_app_instance_commands()
+        # Running at startup working in basic but not in default2 for now
+        # Will put this in until we solve that
+        ctx = self.context
+        if not ctx.filesystem_locations:
+            self._run_app_instance_commands()
 
     def refresh_menu(self):
         self.logger.debug("Refreshing with menu object %s.", self.menu)

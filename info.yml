@@ -15,7 +15,7 @@ configuration:
     debug_logging:
         type: bool
         description: Controls whether debug messages should be emitted to the logger
-        default_value: false
+        default_value: True
 
     menu_favourites:
         type: list

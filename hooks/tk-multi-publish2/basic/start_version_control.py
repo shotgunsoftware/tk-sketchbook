@@ -117,6 +117,10 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
         :returns: dictionary with boolean keys accepted, required and enabled
         """
 
+        # Let's declare this here to have a more logical UX for when a file is
+        # not saved before the Publish is called
+        acceptance = {"accepted": True, "checked": False}
+
         path = _session_path()
 
         if path:
@@ -133,17 +137,18 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The Sketchbook session has not been saved.", extra=_get_save_as_action()
+                "The Sketchbook session has not been saved. Please save your file."
             )
+            acceptance = {"accepted": False, "checked": False}
+
 
         self.logger.info(
             "Sketchbook '%s' plugin accepted the current session." % (self.name,),
             extra=_get_version_docs_action(),
         )
 
-        # accept the plugin, but don't force the user to add a version number
-        # (leave it unchecked)
-        return {"accepted": True, "checked": False}
+        # return the acceptance value
+        return acceptance
 
     def validate(self, settings, item):
         """

@@ -71,7 +71,8 @@ class SketchbookSessionCollector(HookBaseClass):
             file_info = publisher.util.get_file_path_components(path)
             display_name = file_info ["filename"]
         else:
-            display_name = "Current Sketchbook Document"
+            display_name = "Current Sketchbook Session"
+
 
         # create the session item for the publish hierarchy
         session_item = parent_item.create_item(

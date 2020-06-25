@@ -12,6 +12,8 @@ import os
 import sgtk
 import sketchbook_api
 
+import sketchbook_api
+
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
@@ -170,18 +172,24 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
 
         path = _session_path()
 
+        # Let's declare this here to have a more logical UX for when a file is
+        # not saved before the Publish is called
+        acceptance = {"accepted": True, "checked": True, "disabled": True}
+
         if not path:
             # the session has not been saved before (no path determined).
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The Sketchbook session has not been saved.", extra=_get_save_as_action()
+                "The Sketchbook session has not been saved. Please save your file."
             )
+            acceptance = {"accepted": False, "checked": False, "disabled": True}
 
         self.logger.info(
-            "Sketchbook '%s' plugin accepted the current Sketchbook session." % (self.name,)
+            "Sketchbook '%s' plugin accepted the current session." % (self.name,)
         )
-        return {"accepted": True, "checked": True}
+
+        return acceptance
 
     def validate(self, settings, item):
         """

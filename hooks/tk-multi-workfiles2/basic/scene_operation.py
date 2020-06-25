@@ -66,65 +66,36 @@ class SceneOperation(HookClass):
                                                  state, otherwise False
                                 all others     - None
         """
-
         if operation == "current_path":
-            # return the current scene path
+            """
+            Get current file path
+            """
             return sketchbook_api.get_current_path()
-        elif operation == "open":
-            # open a given file
-            return sketchbook_api.open_file(file_path)
-        elif operation == "save":
-            # save the current scene:
-            #
-            return sketchbook_api.save_file()
-        elif operation == "save_as":
-            # first rename the scene as file_path:
-            #
-            # Maya example preserved as reference below
-            # # Maya can choose the wrong file type so
-            # # we should set it here explicitely based
-            # # on the extension
-            # maya_file_type = None
-            # if file_path.lower().endswith(".ma"):
-            #     maya_file_type = "mayaAscii"
-            # elif file_path.lower().endswith(".mb"):
-            #     maya_file_type = "mayaBinary"
 
-            # # save the scene:
-            # if maya_file_type:
-            #     cmds.file(save=True, force=True, type=maya_file_type)
-            # else:
-            #     cmds.file(save=True, force=True)
-            pass
+        elif operation == "open":
+            """
+            File Open
+            """
+            sketchbook_api.open_file(file_path)
+            return True
+
+        elif operation == "save":
+            """
+            File Save
+            """
+            sketchbook_api.save_file()
+            return True
+
+        elif operation == "save_as":
+            """
+            File Save As
+            """
+            sketchbook_api.save_file_as(file_path)
+            return True
+
         elif operation == "reset":
             """
             Reset the scene to an empty state
             """
-            #
-            # Maya example preserved as reference below
-            # while cmds.file(query=True, modified=True):
-            #     # changes have been made to the scene
-            #     res = QtGui.QMessageBox.question(
-            #         None,
-            #         "Save your scene?",
-            #         "Your scene has unsaved changes. Save before proceeding?",
-            #         QtGui.QMessageBox.Yes
-            #         | QtGui.QMessageBox.No
-            #         | QtGui.QMessageBox.Cancel,
-            #     )
-
-            #     if res == QtGui.QMessageBox.Cancel:
-            #         return False
-            #     elif res == QtGui.QMessageBox.No:
-            #         break
-            #     else:
-            #         scene_name = cmds.file(query=True, sn=True)
-            #         if not scene_name:
-            #             cmds.SaveSceneAs()
-            #         else:
-            #             cmds.file(save=True)
-
-            # # do new file:
-            # cmds.file(newFile=True, force=True)
-            # return True
+            sketchbook_api.reset()
             return True

@@ -145,6 +145,13 @@ class SketchbookUploadVersionPlugin(HookBaseClass):
         publisher = self.parent
         file_path = item.properties["path"]
 
+        # Let's tell the log something when a file is not saved
+        if not file_path:
+            self.logger.warn(
+                "The Sketchbook session has not been saved. Please save your file."
+            )
+            return {"accepted": False, "checked": False}
+
         file_info = publisher.util.get_file_path_components(file_path)
         extension = file_info["extension"].lower()
 
