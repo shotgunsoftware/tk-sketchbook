@@ -27,8 +27,8 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
         Path to an png icon on disk
         """
 
-        # look for icon one level up from this hook's folder in "icons" folder
-        return os.path.join(self.disk_location, os.pardir, "icons", "version_up.png")
+        # ensure icon is there
+        return os.path.join(self.disk_location, "icons", "version_up.png")
 
     @property
     def name(self):

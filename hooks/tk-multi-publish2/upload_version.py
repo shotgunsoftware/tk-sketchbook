@@ -27,8 +27,8 @@ class SketchbookUploadVersionPlugin(HookBaseClass):
         Path to an png icon on disk
         """
 
-        # look for icon one level up from this hook's folder in "icons" folder
-        return os.path.join(self.disk_location, os.pardir, "icons", "review.png")
+        # ensure icon is there
+        return os.path.join(self.disk_location, "icons", "review.png")
 
     @property
     def name(self):

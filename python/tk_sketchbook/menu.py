@@ -48,7 +48,11 @@ class SketchBookMenu(object):
         # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
 
     def createContextSubmenu(self):
-        names = [self.JUMP_TO_SG_TEXT, self.JUMP_TO_FS_TEXT, self.SEPARATOR_ITEM]
+        if self._engine.context.filesystem_locations:
+            names = [self.JUMP_TO_SG_TEXT, self.JUMP_TO_FS_TEXT, self.SEPARATOR_ITEM]
+        else:
+            names = [self.JUMP_TO_SG_TEXT, self.SEPARATOR_ITEM]
+
         names.extend ([name for name, data in self._engine.commands.items()
                 if data.get("properties").get("type") == "context_menu"])
         return [self.context_name, names]

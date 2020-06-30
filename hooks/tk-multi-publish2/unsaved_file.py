@@ -26,8 +26,8 @@ class SketchbookUnsavedFilePlugin(HookBaseClass):
         Path to an png icon on disk
         """
 
-        # look for icon one level up from this hook's folder in "icons" folder
-        return os.path.join(self.disk_location, os.pardir, "icons", "file.png")
+        # ensure icon is there
+        return os.path.join(self.disk_location, "icons", "file.png")
 
     @property
     def name(self):
@@ -42,11 +42,26 @@ class SketchbookUnsavedFilePlugin(HookBaseClass):
         Verbose, multi-line description of what the plugin does. This can
         contain simple html for formatting.
         """
+        embed_image = os.path.join(
+            self.disk_location, "docs", "sketchbook-publisher-screenshot.png"
+        )
+
+        help_url = "https://github.com/shotgunsoftware/tk-sketchbook/wiki/Publishing"
 
         return """
         Your file has not been saved.<br>
         Please save your file and re-launch the Shotgun Publisher.
-        """
+
+        <h3>Publishing</h3>
+
+        Once your file is saved you should see Publish Plugins for your file like this image shows:<br>
+
+        <a href=%s>
+        <img width="270" height="240" src=%s ismap>
+        </a>
+
+        <br>Selecting a Publish Plugin allows you to read its' description.
+        """ % (help_url, embed_image)
 
     @property
     def settings(self):
@@ -116,7 +131,7 @@ class SketchbookUnsavedFilePlugin(HookBaseClass):
         if not file_path:
             return acceptance
         else:
-            acceptance = {"accepted": True, "visible": False}
+            acceptance = {"accepted": False, "visible": False}
             return acceptance
 
     def validate(self, settings, item):
