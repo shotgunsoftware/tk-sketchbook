@@ -8,15 +8,10 @@
 # to the Shotgun Pipeline Toolkit Source Code License. All rights not expressly
 # granted therein are reserved by Autodesk, Inc.
 
-import sys
-import traceback
-import re
-import time
 import os
 import logging
 
 import sgtk
-import PySide2
 from tank.platform import Engine
 
 import SketchBookLogger
@@ -31,6 +26,7 @@ class SketchBookEngine(Engine):
     """
     SketchBook Engine
     """
+
     @property
     def host_info(self):
         self.logger.debug("%s: Fetching host info...", self)
@@ -55,7 +51,8 @@ class SketchBookEngine(Engine):
             dialog.close()
 
     def pre_app_init(self):
-        self.logger.debug("%s: Pre app init..." %(self,))
+
+        self.logger.debug("%s: Pre app init..." % (self,))
 
         # unicode characters returned by the shotgun api need to be converted
         # to display correctly in all of the app windows tell QT to interpret C
@@ -71,6 +68,7 @@ class SketchBookEngine(Engine):
 
         self.logger.debug("%s: Initializing QtApp", self)
         from sgtk.platform.qt import QtGui
+
         self._qt_app = QtGui.QApplication.instance()
 
         # import python/tk_sketchbook module
@@ -113,7 +111,6 @@ class SketchBookEngine(Engine):
             self.logger.debug("Refreshing with menu object %s.", self.menu)
             sketchbook_api.refresh_menu(self.menu.create())
 
-
     def _emit_log_message(self, handler, record):
         if record.levelno < logging.INFO:
             formatter = logging.Formatter("Debug: Shotgun %(basename)s: %(message)s")
@@ -130,7 +127,7 @@ class SketchBookEngine(Engine):
         """
         return True
 
-    def refresh_context():
+    def refresh_context(self):
         logger.debug("Refreshing the context")
 
         # Get the path of the current open Maya scene file.
@@ -149,7 +146,7 @@ class SketchBookEngine(Engine):
             logger.debug("Extracted sgtk instance: '%r' from path: '%r'", tk, new_path)
 
         except sgtk.TankError as e:
-            logger.exception("Could not execute sgtk_from_path('%s')" % new_path)
+            logger.exception("Could not execute sgtk_from_path('%s')" % e)
             return
 
         # Construct a new context for this path:
@@ -169,7 +166,7 @@ class SketchBookEngine(Engine):
         # Build a dictionary mapping app instance names to dictionaries of
         # commands they registered with the engine.
         app_instance_commands = {}
-        for(command_name, value) in self.commands.items():
+        for (command_name, value) in self.commands.items():
             app_instance = value["properties"].get("app")
             if app_instance:
                 # Add entry 'command name: command function' to the command
@@ -201,7 +198,7 @@ class SketchBookEngine(Engine):
             else:
                 if not setting_command_name:
                     # Run all commands of the given app instance.
-                    for(command_name, command_function) in command_dict.items():
+                    for (command_name, command_function) in command_dict.items():
                         self.logger.debug(
                             "%s startup running app '%s' command '%s'.",
                             self.name,

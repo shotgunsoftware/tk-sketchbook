@@ -127,7 +127,8 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
             version_number = self._get_version_number(path, item)
             if version_number is not None:
                 self.logger.info(
-                    "Sketchbook '%s' plugin rejected the current session..." % (self.name,)
+                    "Sketchbook '%s' plugin rejected the current session..."
+                    % (self.name,)
                 )
                 self.logger.info("  There is already a version number in the file...")
                 self.logger.info("  Sketchbook file path: %s" % (path,))
@@ -140,7 +141,6 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
                 "The Sketchbook session has not been saved. Please save your file."
             )
             acceptance = {"accepted": False, "checked": False}
-
 
         self.logger.info(
             "Sketchbook '%s' plugin accepted the current session." % (self.name,),

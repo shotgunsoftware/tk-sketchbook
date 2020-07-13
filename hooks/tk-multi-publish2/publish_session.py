@@ -9,8 +9,8 @@
 # not expressly granted therein are reserved by Autodesk, Inc.
 
 import os
+
 import sgtk
-import sketchbook_api
 
 import sketchbook_api
 
@@ -269,7 +269,9 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
                         "label": "Save to v%s" % (version,),
                         "tooltip": "Save to the next available version number, "
                         "v%s" % (version,),
-                        "callback": lambda: sketchbook_api.save_file_as(next_version_path),
+                        "callback": lambda: sketchbook_api.save_file_as(
+                            next_version_path
+                        ),
                     }
                 },
             )
@@ -333,6 +335,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         self._save_to_next_version(
             item.properties["path"], item, sketchbook_api.save_file_as
         )
+
 
 def _session_path():
     """

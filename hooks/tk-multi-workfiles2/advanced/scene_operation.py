@@ -9,10 +9,9 @@
 # not expressly granted therein are reserved by Autodesk, Inc.
 #
 
-import sketchbook_api
-
 import sgtk
-from sgtk.platform.qt import QtGui
+
+import sketchbook_api
 
 HookClass = sgtk.get_hook_baseclass()
 

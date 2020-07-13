@@ -18,6 +18,7 @@ import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
 from sgtk.util import is_windows, is_macos
 
+
 class SketchbookLauncher(SoftwareLauncher):
     """
     Handles launching Sketchbook executables.
@@ -25,7 +26,6 @@ class SketchbookLauncher(SoftwareLauncher):
     Automatically starts up a tk-Sketchbook engine with the current
     context.
     """
-
 
     def prepare_launch(self, exec_path, args, file_to_open=None):
         """
@@ -51,9 +51,11 @@ class SketchbookLauncher(SoftwareLauncher):
         # to all libraries available in this process. We're appending instead of
         # setting because we don't want to stomp on any PYTHONPATH that might already
         # exist that we want to persist
-        sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join (sys.path))
+        sgtk.util.append_path_to_env_var("PYTHONPATH", os.pathsep.join(sys.path))
 
-        sgtk.util.append_path_to_env_var("PYTHONPATH", os.path.join (self.disk_location, "startup"))
+        sgtk.util.append_path_to_env_var(
+            "PYTHONPATH", os.path.join(self.disk_location, "startup")
+        )
 
         # Prepare the launch environment with variables required by the
         # classic bootstrap approach.
@@ -67,7 +69,6 @@ class SketchbookLauncher(SoftwareLauncher):
 
         return LaunchInformation(exec_path, args, required_env)
 
-
     def scan_software(self):
         """
         Scan the filesystem for SketchBook executables.
@@ -76,13 +77,15 @@ class SketchbookLauncher(SoftwareLauncher):
         """
         sbpPath = self.sketchBookPath()
         icon_path = os.path.join(self.disk_location, "SketchBook.png")
-        appName = 'SketchBook Pro' if 'Pro' in sbpPath else 'SketchBook'
-        version = '2021.1' if 'Pro' in sbpPath else ' '
-        return [ SoftwareVersion(version, appName, sbpPath, icon_path) ]
+        appName = "SketchBook Pro" if "Pro" in sbpPath else "SketchBook"
+        version = "2021.1" if "Pro" in sbpPath else " "
+        return [SoftwareVersion(version, appName, sbpPath, icon_path)]
 
     def sketchBookPath(self):
         if is_macos():
-            sbpPath = self.macAppPath() + '/Contents/MacOS/SketchBook'
+            sbpPath = "'" + self.macAppPath() + "/Contents/MacOS/SketchBook'"
+            if "Pro" in sbpPath:
+                sbpPath += "Pro"
         elif is_windows():
             paths = self.windowsExePath(expanduser("~/Desktop"))
 
@@ -90,39 +93,49 @@ class SketchbookLauncher(SoftwareLauncher):
                 paths = self.windowsExePath(expanduser("~/SketchBook"))
 
             if len(paths) == 0:
-                paths = self.windowsExePath('C:\\Program Files')
+                paths = self.windowsExePath("C:\\Program Files")
 
-            sbpPath = paths[0] if len(paths) > 0 else ''
+            sbpPath = paths[0] if len(paths) > 0 else ""
 
-        self.startLog('Found SketchBook at ' + sbpPath)
+        self.startLog("Found SketchBook at " + sbpPath)
         return sbpPath
 
     def macAppPath(self):
-        paths = self.macAppPathForBundleID('com.autodesk.SketchBook')
+        paths = self.macAppPathForBundleID("com.autodesk.SketchBook")
 
-        if not len (paths):
-            paths = self.macAppPathForBundleID('com.autodesk.SketchBookPro')
+        if not len(paths):
+            paths = self.macAppPathForBundleID("com.autodesk.SketchBookPro")
 
-        return paths [0] if len (paths) else ''
+        return paths[0] if len(paths) else ""
 
     def macAppPathForBundleID(self, bundleID):
-        found = subprocess.check_output(['mdfind', 'kMDItemCFBundleIdentifier = "%s"' % bundleID])
+        found = subprocess.check_output(
+            ["mdfind", 'kMDItemCFBundleIdentifier = "%s"' % bundleID]
+        )
         return found.strip().splitlines()
 
     def windowsExePath(self, directory):
-        paths = ''
-        exePatterns = [directory + '\\' + name + '.exe' for name in ['SketchBook', 'SketchBookPro']]
+        paths = ""
+        exePatterns = [
+            directory + "\\" + name + ".exe" for name in ["SketchBook", "SketchBookPro"]
+        ]
 
         for pattern in exePatterns:
             command = 'dir "' + pattern + '" /s /B'
             try:
-                paths += subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
+                paths += subprocess.check_output(
+                    command, shell=True, stderr=subprocess.STDOUT
+                )
             except subprocess.CalledProcessError as e:
-                pass
+                self.startLog("Exception: %s" % e)
 
         return paths.splitlines()
 
-
     def startLog(self, message):
         with open(expanduser("~") + "/Desktop/start_log.txt", "a") as logfile:
-            logfile.write(datetime.datetime.now().strftime("%a %d %b %H:%M") + '  ' + message + "\n")
+            logfile.write(
+                datetime.datetime.now().strftime("%a %d %b %H:%M")
+                + "  "
+                + message
+                + "\n"
+            )

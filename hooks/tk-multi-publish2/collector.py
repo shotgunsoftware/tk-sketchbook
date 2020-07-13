@@ -43,10 +43,10 @@ class SketchbookSessionCollector(HookBaseClass):
                 "type": "template",
                 "default": None,
                 "description": "Template path for artist work files. Should "
-                               "correspond to a template defined in "
-                               "templates.yml. If configured, is made available"
-                               "to publish plugins via the collected item's "
-                               "properties. ",
+                "correspond to a template defined in "
+                "templates.yml. If configured, is made available"
+                "to publish plugins via the collected item's "
+                "properties. ",
             },
         }
 
@@ -69,10 +69,9 @@ class SketchbookSessionCollector(HookBaseClass):
 
         if path:
             file_info = publisher.util.get_file_path_components(path)
-            display_name = file_info ["filename"]
+            display_name = file_info["filename"]
         else:
             display_name = "Current Sketchbook Session"
-
 
         # create the session item for the publish hierarchy
         session_item = parent_item.create_item(

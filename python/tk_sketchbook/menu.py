@@ -12,12 +12,11 @@
 Menu handling for SketchBook
 """
 
-from collections import OrderedDict
 import os
-import sys
 
 from sgtk.platform.qt import QtGui
 from sgtk.platform.qt import QtCore
+from sgtk.util import is_windows, is_macos, is_linux
 
 
 class SketchBookMenu(object):
@@ -53,13 +52,21 @@ class SketchBookMenu(object):
         else:
             names = [self.JUMP_TO_SG_TEXT, self.SEPARATOR_ITEM]
 
-        names.extend ([name for name, data in self._engine.commands.items()
-                if data.get("properties").get("type") == "context_menu"])
+        names.extend(
+            [
+                name
+                for name, data in self._engine.commands.items()
+                if data.get("properties").get("type") == "context_menu"
+            ]
+        )
         return [self.context_name, names]
 
     def createAppsEntries(self):
-        return [[name, []] for name, data in self._engine.commands.items()
-                if data.get("properties").get("type") != "context_menu"]
+        return [
+            [name, []]
+            for name, data in self._engine.commands.items()
+            if data.get("properties").get("type") != "context_menu"
+        ]
 
     def doCommand(self, commandName):
         self.logger.debug("Running command %s.", commandName)
@@ -69,8 +76,8 @@ class SketchBookMenu(object):
         elif commandName == self.JUMP_TO_FS_TEXT:
             self.jump_to_fs()
         elif self._engine.commands[commandName]:
-            if self._engine.commands[commandName]['callback']:
-                self._engine.commands[commandName]['callback']();
+            if self._engine.commands[commandName]["callback"]:
+                self._engine.commands[commandName]["callback"]()
 
     def jump_to_sg(self):
         """
@@ -87,18 +94,15 @@ class SketchBookMenu(object):
         paths = self._engine.context.filesystem_locations
 
         for disk_location in paths:
-            # get the setting
-            system = sys.platform
-
             # run the app
-            if system == "linux2":
+            if is_linux():
                 cmd = 'xdg-open "%s"' % disk_location
-            elif system == "darwin":
+            elif is_macos():
                 cmd = 'open "%s"' % disk_location
-            elif system == "win32":
+            elif is_windows():
                 cmd = 'cmd.exe /C start "Folder" "%s"' % disk_location
             else:
-                raise Exception("Platform '%s' is not supported." % system)
+                raise Exception("Platform is not supported.")
 
             self._engine.logger.debug("Jump to filesystem command: {}".format(cmd))
 

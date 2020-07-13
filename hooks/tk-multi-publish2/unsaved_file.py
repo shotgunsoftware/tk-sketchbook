@@ -61,7 +61,10 @@ class SketchbookUnsavedFilePlugin(HookBaseClass):
         </a>
 
         <br>Selecting a Publish Plugin allows you to read its' description.
-        """ % (help_url, embed_image)
+        """ % (
+            help_url,
+            embed_image,
+        )
 
     @property
     def settings(self):

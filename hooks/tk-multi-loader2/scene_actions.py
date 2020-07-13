@@ -12,8 +12,6 @@
 Hook that loads defines all the available actions, broken down by publish type.
 """
 
-import os
-
 import sgtk
 from sgtk.platform.qt import QtGui
 
@@ -65,7 +63,6 @@ class SketchbookActions(HookBaseClass):
             "Generate actions called for UI element %s. "
             "Actions: %s. Publish Data: %s" % (ui_area, actions, sg_publish_data)
         )
-        engine = app.engine
 
         action_instances = []
         try:
@@ -110,7 +107,6 @@ class SketchbookActions(HookBaseClass):
         :returns: No return value expected.
         """
         app = self.parent
-        engine = app.engine
 
         app.log_debug(
             "Execute action called for action %s. "
