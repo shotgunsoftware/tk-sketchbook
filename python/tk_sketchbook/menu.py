@@ -69,15 +69,46 @@ class SketchBookMenu(object):
         ]
 
     def doCommand(self, commandName):
-        self.logger.debug("Running command %s.", commandName)
+        if not self.alreadyRunning(commandName):
+            self.logger.debug("Running command %s.", commandName)
 
-        if commandName == self.JUMP_TO_SG_TEXT:
-            self.jump_to_sg()
-        elif commandName == self.JUMP_TO_FS_TEXT:
-            self.jump_to_fs()
-        elif self._engine.commands[commandName]:
-            if self._engine.commands[commandName]["callback"]:
-                self._engine.commands[commandName]["callback"]()
+            if commandName == self.JUMP_TO_SG_TEXT:
+                self.jump_to_sg()
+            elif commandName == self.JUMP_TO_FS_TEXT:
+                self.jump_to_fs()
+            elif self._engine.commands[commandName]:
+                if self._engine.commands[commandName]["callback"]:
+                    self._engine.commands[commandName]["callback"]()
+
+            self.logger.debug("Ran command %s.", commandName)
+        else:
+            self.bringToFront(commandName)
+
+    def alreadyRunning(self, commandName):
+        return self.dialogForCommand(commandName) is not None
+
+    def bringToFront(self, commandName):
+        dialog = self.dialogForCommand(commandName)
+        if dialog:
+            dialog.show()
+            dialog.activateWindow()
+            dialog.raise_()
+
+    def dialogForCommand(self, commandName):
+        for dialog in self._engine.created_qt_dialogs:
+            if {
+                "Shotgun Panel...": "Shotgun: Shotgun",
+                "Publish...": "Shotgun: Publish",
+                "Load...": "Shotgun: Loader",
+                "Work Area Info...": "Shotgun: Your Current Work Area",
+                "Shotgun Python Console": "Shotgun: Shotgun Python Console",
+                "File Open...": "Shotgun: File Open",
+                "File Save...": "Shotgun: File Save",
+            }.get(commandName) == dialog.windowTitle():
+                return dialog
+
+        self.logger.debug("Don't have a dialog for command %s", commandName)
+        return None
 
     def jump_to_sg(self):
         """
