@@ -87,10 +87,7 @@ class SketchbookLauncher(SoftwareLauncher):
             if "Pro" in sbpPath:
                 sbpPath += "Pro"
         elif is_windows():
-            paths = self.windowsExePath(expanduser("~/Desktop"))
-
-            if len(paths) == 0:
-                paths = self.windowsExePath(expanduser("~/SketchBook"))
+            paths = self.windowsExePath(expanduser("~/SketchBook"))
 
             if len(paths) == 0:
                 paths = self.windowsExePath("C:\\Program Files")
@@ -101,10 +98,10 @@ class SketchbookLauncher(SoftwareLauncher):
         return sbpPath
 
     def macAppPath(self):
-        paths = self.macAppPathForBundleID("com.autodesk.SketchBook")
+        paths = self.macAppPathForBundleID("com.autodesk.SketchBookPro2021")
 
         if not len(paths):
-            paths = self.macAppPathForBundleID("com.autodesk.SketchBookPro")
+            paths = self.macAppPathForBundleID("com.autodesk.SketchBook")
 
         return paths[0] if len(paths) else ""
 
@@ -117,7 +114,8 @@ class SketchbookLauncher(SoftwareLauncher):
     def windowsExePath(self, directory):
         paths = ""
         exePatterns = [
-            directory + "\\" + name + ".exe" for name in ["SketchBook", "SketchBookPro"]
+            directory + "\\" + name + ".exe"
+            for name in ["SketchBook Pro 2021.1", "SketchBook"]
         ]
 
         for pattern in exePatterns:
