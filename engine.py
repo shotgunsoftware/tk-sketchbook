@@ -63,6 +63,10 @@ class SketchBookEngine(Engine):
         QtCore.QTextCodec.setCodecForCStrings(utf8)
         self.logger.debug("set utf-8 codec for widget text")
 
+        # Make the QApplication use the dark theme. Must be called after the QApplication is instantiated, which
+        # is done from Sketchbook
+        self._initialize_dark_look_and_feel()
+
     def post_app_init(self):
         self.logger.debug("%s: Post app init...", self)
 
