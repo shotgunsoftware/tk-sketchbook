@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,41 +6,74 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 import os
 import sys
 import subprocess
-import datetime
-from os.path import expanduser
+import re
+import json
 
 import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
-from sgtk.util import is_windows, is_macos
+from sgtk.util import is_windows, is_macos, is_linux
 
 
-class SketchbookLauncher(SoftwareLauncher):
+class SketchBookLauncher(SoftwareLauncher):
     """
-    Handles launching Sketchbook executables.
+    Handles launching SketchBook executables.
 
-    Automatically starts up a tk-Sketchbook engine with the current
+    Automatically starts up a tk-sketchbook engine with the current
     context.
     """
 
+    @property
+    def minimum_supported_version(self):
+        """
+        The minimum software version that is supported by the launcher.
+        """
+        return "8.9.0.0"
+
+    def scan_software(self):
+        """
+        Scan the Windows Registry for SketchBook executables on Windows
+        Use software_profiler technique on MacOS
+
+        :return: A list of :class:`SoftwareVersion` objects.
+        """
+        self.logger.debug("Scanning for SketchBook executables.")
+
+        if is_linux():
+            # No linux version
+            return []
+
+        supported_sw_versions = []
+
+        if is_windows() or is_macos():
+            for sw_version in self._find_software():
+                (supported, reason) = self._is_supported(sw_version)
+                if supported:
+                    supported_sw_versions.append(sw_version)
+                else:
+                    self.logger.debug(
+                        "SoftwareVersion %s is not supported: %s" % (sw_version, reason)
+                    )
+
+        return supported_sw_versions
+
     def prepare_launch(self, exec_path, args, file_to_open=None):
         """
-        Prepares an environment to launch Sketchbook.
+        Prepares an environment to launch SketchBook.
 
-        This environment will automatically load Toolkit and the tk-Sketchbook engine when
+        This environment will automatically load Toolkit and the tk-sketchbook engine when
         the program starts.
 
-        :param str exec_path: Path to Sketchbook executable.
+        :param str exec_path: Path to SketchBook executable.
         :param str args: Command line arguments as strings.
         :param str file_to_open: (optional) Full path name of a file to open on launch.
         :returns: :class:`LaunchInformation` instance
         """
-        self.startLog("Here!  Launching Sketchbook at %s" % exec_path)
-
+        # Declare the base required_env here
         required_env = {}
 
         # Append executable folder to PATH environment variable
@@ -59,7 +92,7 @@ class SketchbookLauncher(SoftwareLauncher):
 
         # Prepare the launch environment with variables required by the
         # classic bootstrap approach.
-        self.startLog("Preparing Sketchbook Launch...")
+        self.logger.debug("Preparing SketchBook Launch...")
         required_env["SGTK_ENGINE"] = self.engine_name
         required_env["SGTK_CONTEXT"] = sgtk.context.serialize(self.context)
 
@@ -69,71 +102,173 @@ class SketchbookLauncher(SoftwareLauncher):
 
         return LaunchInformation(exec_path, args, required_env)
 
-    def scan_software(self):
+    def _find_software(self):
         """
-        Scan the filesystem for SketchBook executables.
+        Find executables in the Registry for Windows
+        Find executables using system_profiler for MacOS
 
-        :return: A list of :class:`SoftwareVersion` objects.
+        :returns: List of :class:`SoftwareVersion` instances
         """
-        sbpPath = self.sketchBookPath()
-        icon_path = os.path.join(self.disk_location, "SketchBook.png")
-        appName = "SketchBook Pro" if "Pro" in sbpPath else "SketchBook"
-        version = "2021.1" if "Pro" in sbpPath else " "
-        return [SoftwareVersion(version, appName, sbpPath, icon_path)]
-
-    def sketchBookPath(self):
-        if is_macos():
-            sbpPath = "'" + self.macAppPath() + "/Contents/MacOS/SketchBook'"
-            if "Pro" in sbpPath:
-                sbpPath += "Pro"
-        elif is_windows():
-            paths = self.windowsExePath(expanduser("~/SketchBook"))
-
-            if len(paths) == 0:
-                paths = self.windowsExePath("C:\\Program Files")
-
-            sbpPath = paths[0] if len(paths) > 0 else ""
-
-        self.startLog("Found SketchBook at " + sbpPath)
-        return sbpPath
-
-    def macAppPath(self):
-        paths = self.macAppPathForBundleID("com.autodesk.SketchBookPro2021")
-
-        if not len(paths):
-            paths = self.macAppPathForBundleID("com.autodesk.SketchBook")
-
-        return paths[0] if len(paths) else ""
-
-    def macAppPathForBundleID(self, bundleID):
-        found = subprocess.check_output(
-            ["mdfind", 'kMDItemCFBundleIdentifier = "%s"' % bundleID]
-        )
-        return found.strip().splitlines()
-
-    def windowsExePath(self, directory):
-        paths = ""
-        exePatterns = [
-            directory + "\\" + name + ".exe"
-            for name in ["SketchBook Pro 2021.1", "SketchBook"]
-        ]
-
-        for pattern in exePatterns:
-            command = 'dir "' + pattern + '" /s /B'
-            try:
-                paths += subprocess.check_output(
-                    command, shell=True, stderr=subprocess.STDOUT
-                )
-            except subprocess.CalledProcessError as e:
-                self.startLog("Exception: %s" % e)
-
-        return paths.splitlines()
-
-    def startLog(self, message):
-        with open(expanduser("~") + "/Desktop/start_log.txt", "a") as logfile:
-            logfile.write(
-                datetime.datetime.now().strftime("%a %d %b %H:%M")
-                + "  "
-                + message
-                + "\n"
+        sw_versions = []
+        if is_windows():
+            # Determine a list of paths to search for SketchBook executables based
+            # on the windows registry
+            install_paths_dicts = _get_installation_paths_from_windows_registry(
+                self.logger
             )
+
+        # MacOS
+        if is_macos():
+            # Determine a list of paths to search for SketchBook executables based
+            # on the system_profiler return values
+            install_paths_dicts = _get_installation_paths_from_mac(self.logger)
+
+        for install_paths in install_paths_dicts:
+            executable_version = install_paths["version"]
+            executable_path = install_paths["path"]
+            launcher_name = install_paths["_name"]
+            # Create The actual SoftwareVersions
+            sw_versions.append(
+                SoftwareVersion(
+                    executable_version,
+                    launcher_name,
+                    executable_path,
+                    os.path.join(self.disk_location, "SketchBook.png"),
+                )
+            )
+
+        return sw_versions
+
+    def _is_supported(self, sw_version):
+        """
+        Determine if a software version is supported or not
+        :param sw_version:
+        :return: boolean, message
+        """
+        # 3 digits on Mac, 4 on Windows
+        if (len(sw_version.version)) == 5:
+            compare_version = str(sw_version.version).join(".0")
+        else:
+            compare_version = sw_version.version
+        if int(compare_version.replace(".", "")) >= int(
+            str(self.minimum_supported_version).replace(".", "")
+        ):
+            return True, "Supported version of SketchBook"
+        else:
+            return False, "Unsupported version of SketchBook"
+
+
+def _get_installation_paths_from_windows_registry(logger):
+    """
+    Query Windows registry for SketchBook installations.
+
+    :returns: List of dictionaries of paths and versions
+    where SketchBook is installed.
+    """
+    # Local scope here
+    from tank_vendor.shotgun_api3.lib import six
+
+    winreg = six.moves.winreg
+
+    logger.debug(
+        "Querying Windows registry for keys "
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\Common\\SketchBook Pro "
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook"
+    )
+
+    install_paths = []
+    sub_key_names = []
+
+    # SketchBook install keys
+    base_key_names = [
+        [
+            "SOFTWARE\\Autodesk\\Common\\SketchBook Pro",
+            "Location",
+            "SketchBookPro.exe",
+            "SketchBookPro",
+        ],
+        [
+            "SOFTWARE\\Autodesk\\SketchBook\\8.0",
+            "InstallLocation",
+            "SketchBook.exe",
+            "SketchBook",
+        ],
+    ]
+    for base_key_name in base_key_names:
+        # find all subkeys in keys
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key_name[0])
+            sub_key_count = winreg.QueryInfoKey(key)[0]
+            i = 0
+            while i < sub_key_count:
+                sub_key_names.append(winreg.EnumKey(key, i))
+                i += 1
+            winreg.CloseKey(key)
+        except WindowsError:
+            logger.error("error opening key %s" % base_key_name[0])
+
+        # Query the value Location or InstallLocation on all subkeys.
+        try:
+            for name in sub_key_names:
+                key_name = base_key_name[0] + "\\" + name
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_name)
+                try:
+                    base_path = winreg.QueryValueEx(key, base_key_name[1])
+                    full_path = base_path[0] + base_key_name[2]
+                    version = _get_windows_version(full_path)
+                    name = base_key_name[3]
+                    install_paths.append(
+                        {"path": full_path, "version": version, "_name": name}
+                    )
+                    logger.debug("Found (Install)Location value for key %s" % key_name)
+                except WindowsError:
+                    logger.debug(
+                        "Value (Install)Location not found for key %s, skipping key"
+                        % key_name
+                    )
+                winreg.CloseKey(key)
+        except WindowsError:
+            logger.error("Error opening key %s" % key_name)
+
+    return install_paths
+
+
+def _get_windows_version(full_path):
+    """
+    Use `wmic` to determine the installed version of SketchBook
+    """
+    version_command = subprocess.check_output(
+        [
+            "wmic",
+            "datafile",
+            "where",
+            "name=" + '"' + str(full_path).replace("\\", "\\\\") + '"',
+            "get",
+            "Version",
+            "/value",
+        ]
+    )
+    version_list = re.findall(r"[\d.]", str(version_command))
+    version = "".join(map(str, version_list))
+
+    return version
+
+
+def _get_installation_paths_from_mac(logger):
+    """
+    Use system_profiler command for SketchBook installations.
+
+    :returns: List of dictionaries including paths where SketchBook is installed.
+    """
+    install_paths = []
+    installed_apps = subprocess.check_output(
+        ["system_profiler", "SPApplicationsDataType", "-json"]
+    )
+    installed_apps_dict = json.loads(installed_apps.decode("utf-8"))
+    for i in range(len(installed_apps_dict["SPApplicationsDataType"])):
+        for k, v in installed_apps_dict["SPApplicationsDataType"][i].items():
+            if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
+                install_paths.append(installed_apps_dict["SPApplicationsDataType"][i])
+                logger.debug("install_paths is %s" % install_paths)
+
+    return install_paths
