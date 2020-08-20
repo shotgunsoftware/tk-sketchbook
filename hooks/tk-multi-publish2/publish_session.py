@@ -17,9 +17,9 @@ import sketchbook_api
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookSessionPublishPlugin(HookBaseClass):
+class SketchBookSessionPublishPlugin(HookBaseClass):
     """
-    Plugin for publishing an open sketchbook session.
+    Plugin for publishing an open SketchBook session.
 
     This hook relies on functionality found in the base file publisher hook in
     the publish2 app and should inherit from it in the configuration. The hook
@@ -109,7 +109,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         """
 
         # inherit the settings from the base publish plugin
-        base_settings = super(SketchbookSessionPublishPlugin, self).settings or {}
+        base_settings = super(SketchBookSessionPublishPlugin, self).settings or {}
 
         # settings specific to this class
         sketchbook_publish_settings = {
@@ -181,12 +181,12 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The Sketchbook session has not been saved. Please save your file."
+                "The SketchBook session has not been saved. Please save your file."
             )
             acceptance = {"accepted": False, "checked": False, "disabled": True}
 
         self.logger.info(
-            "Sketchbook '%s' plugin accepted the current session." % (self.name,)
+            "SketchBook '%s' plugin accepted the current session." % (self.name,)
         )
 
         return acceptance
@@ -211,7 +211,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         if not path:
             # the session still requires saving. provide a save button.
             # validation fails.
-            error_msg = "The Sketchbook session has not been saved."
+            error_msg = "The SketchBook session has not been saved."
             self.logger.error(error_msg, extra=_get_save_as_action())
             raise Exception(error_msg)
 
@@ -234,7 +234,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
                     extra={
                         "action_button": {
                             "label": "Save File",
-                            "tooltip": "Save the current Sketchbook session to a "
+                            "tooltip": "Save the current SketchBook session to a "
                             "different file name",
                             # will launch wf2 if configured
                             "callback": _get_save_as_action(),
@@ -292,7 +292,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         item.properties["path"] = path
 
         # run the base class validation
-        return super(SketchbookSessionPublishPlugin, self).validate(settings, item)
+        return super(SketchBookSessionPublishPlugin, self).validate(settings, item)
 
     def publish(self, settings, item):
         """
@@ -315,7 +315,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         item.properties["path"] = path
 
         # let the base class register the publish
-        super(SketchbookSessionPublishPlugin, self).publish(settings, item)
+        super(SketchBookSessionPublishPlugin, self).publish(settings, item)
 
     def finalize(self, settings, item):
         """
@@ -329,7 +329,7 @@ class SketchbookSessionPublishPlugin(HookBaseClass):
         """
 
         # do the base class finalization
-        super(SketchbookSessionPublishPlugin, self).finalize(settings, item)
+        super(SketchBookSessionPublishPlugin, self).finalize(settings, item)
 
         # bump the session file to the next version
         self._save_to_next_version(

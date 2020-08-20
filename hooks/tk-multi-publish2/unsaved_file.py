@@ -15,7 +15,7 @@ import sgtk
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookUnsavedFilePlugin(HookBaseClass):
+class SketchBookUnsavedFilePlugin(HookBaseClass):
     """
     Plugin for informing the user to save their file before Publishing
     """

@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,7 +6,7 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 """
 This file is loaded automatically by SketchBook at startup
@@ -27,14 +27,14 @@ def start_engine():
     sgtk.LogManager().initialize_base_file_handler("tk-sketchbook")
     logger = sgtk.LogManager.get_logger(__name__)
 
-    logger.debug("Launching Sketchbook engine")
+    logger.debug("Launching SketchBook engine")
 
     try:
         context = sgtk.context.deserialize(os.environ.get("SGTK_CONTEXT"))
         engine = sgtk.platform.start_engine("tk-sketchbook", context.sgtk, context)
     except Exception as e:
         logger.exception(
-            "Unexpected exception while launching the Sketchbook engine {!r}.".format(e)
+            "Unexpected exception while launching the SketchBook engine {!r}.".format(e)
         )
         raise
     else:

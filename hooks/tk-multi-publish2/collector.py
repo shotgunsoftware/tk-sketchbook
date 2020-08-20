@@ -16,7 +16,7 @@ import sketchbook_api
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookSessionCollector(HookBaseClass):
+class SketchBookSessionCollector(HookBaseClass):
     @property
     def settings(self):
         """
@@ -35,7 +35,7 @@ class SketchbookSessionCollector(HookBaseClass):
         """
 
         # grab any base class settings
-        collector_settings = super(SketchbookSessionCollector, self).settings or {}
+        collector_settings = super(SketchBookSessionCollector, self).settings or {}
 
         # settings specific to this collector
         sketchbook_session_settings = {
@@ -57,7 +57,7 @@ class SketchbookSessionCollector(HookBaseClass):
 
     def process_current_session(self, settings, parent_item):
         """
-        Analyzes the open document in Sketchbook and creates publish items
+        Analyzes the open document in SketchBook and creates publish items
         parented under the supplied item.
         :param dict settings: Configured settings for this collector
         :param parent_item: Root item instance
@@ -71,19 +71,19 @@ class SketchbookSessionCollector(HookBaseClass):
             file_info = publisher.util.get_file_path_components(path)
             display_name = file_info["filename"]
         else:
-            display_name = "Current Sketchbook Session"
+            display_name = "Current SketchBook Session"
 
         # create the session item for the publish hierarchy
         session_item = parent_item.create_item(
-            "sketchbook.session", "Sketchbook Session", display_name
+            "sketchbook.session", "SketchBook Session", display_name
         )
 
-        icon_path = os.path.join(self.disk_location, "icons", "Sketchbook.png")
+        icon_path = os.path.join(self.disk_location, "icons", "SketchBook.png")
 
         session_item.set_icon_from_path(icon_path)
         session_item.thumbnail_enabled = False
         session_item.properties["path"] = path
 
-        self.logger.info("Collected current Sketchbook session")
+        self.logger.info("Collected current SketchBook session")
 
         return session_item

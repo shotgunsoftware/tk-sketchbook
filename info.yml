@@ -37,7 +37,7 @@ configuration:
                      is a dictionary with two keys: 'app_instance' and 'name'.  The app_instance
                      value connects this entry to a particular app instance defined in the
                      environment configuration file.  The name is the menu name of the command
-                     to run when the Sketchbook engine starts up.  If name is '' then all commands from the
+                     to run when the SketchBook engine starts up.  If name is '' then all commands from the
                      given app instance are started."
         allows_empty: True
         default_value: []
@@ -51,7 +51,7 @@ configuration:
         type:           int
         description:    "Specify the minimum Application major version that will prompt a warning if
                             it isn't yet fully supported and tested with Toolkit.  To disable the warning
-                            dialog for the version you are testing, it is recomended that you set this
+                            dialog for the version you are testing, it is recommended that you set this
                             value to the current major version + 1."
         default_value:  2021
 
@@ -59,8 +59,8 @@ configuration:
 requires_shotgun_fields:
 
 # More verbose description of this item
-display_name: "Shotgun Engine for Autodesk Sketchbook"
-description: "Shotgun Integration for Autodesk Sketchbook"
+display_name: "Shotgun Engine for Autodesk SketchBook"
+description: "Shotgun Integration for Autodesk SketchBook"
 
 # Required minimum versions for this item to run
 requires_shotgun_version:

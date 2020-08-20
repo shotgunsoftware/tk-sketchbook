@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Shotgun Software Inc.
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -6,7 +6,7 @@
 # Source Code License included in this distribution package. See LICENSE.
 # By accessing, using, copying or modifying this work you indicate your
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
-# not expressly granted therein are reserved by Shotgun Software Inc.
+# not expressly granted therein are reserved by Autodesk, Inc.
 
 """
 Hook that loads defines all the available actions, broken down by publish type.
@@ -20,7 +20,7 @@ import sketchbook_api
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookActions(HookBaseClass):
+class SketchBookActions(HookBaseClass):
     def generate_actions(self, sg_publish_data, actions, ui_area):
         """
         Returns a list of action instances for a particular publish.

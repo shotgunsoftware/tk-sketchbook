@@ -16,7 +16,7 @@ from tank_vendor import six
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookUploadVersionPlugin(HookBaseClass):
+class SketchBookUploadVersionPlugin(HookBaseClass):
     """
     Plugin for sending images to Shotgun for review.
     """
@@ -148,7 +148,7 @@ class SketchbookUploadVersionPlugin(HookBaseClass):
         # Let's tell the log something when a file is not saved
         if not file_path:
             self.logger.warn(
-                "The Sketchbook session has not been saved. Please save your file."
+                "The SketchBook session has not been saved. Please save your file."
             )
             return {"accepted": False, "checked": False}
 

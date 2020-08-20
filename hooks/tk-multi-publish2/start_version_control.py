@@ -15,9 +15,9 @@ import sketchbook_api
 HookBaseClass = sgtk.get_hook_baseclass()
 
 
-class SketchbookStartVersionControlPlugin(HookBaseClass):
+class SketchBookStartVersionControlPlugin(HookBaseClass):
     """
-    Simple plugin to insert a version number into the sketchbook file path if one
+    Simple plugin to insert a version number into the SketchBook file path if one
     does not exist.
     """
 
@@ -127,23 +127,23 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
             version_number = self._get_version_number(path, item)
             if version_number is not None:
                 self.logger.info(
-                    "Sketchbook '%s' plugin rejected the current session..."
+                    "SketchBook '%s' plugin rejected the current session..."
                     % (self.name,)
                 )
                 self.logger.info("  There is already a version number in the file...")
-                self.logger.info("  Sketchbook file path: %s" % (path,))
+                self.logger.info("  SketchBook file path: %s" % (path,))
                 return {"accepted": False}
         else:
             # the session has not been saved before (no path determined).
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The Sketchbook session has not been saved. Please save your file."
+                "The SketchBook session has not been saved. Please save your file."
             )
             acceptance = {"accepted": False, "checked": False}
 
         self.logger.info(
-            "Sketchbook '%s' plugin accepted the current session." % (self.name,),
+            "SketchBook '%s' plugin accepted the current session." % (self.name,),
             extra=_get_version_docs_action(),
         )
 
@@ -170,7 +170,7 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
         if not path:
             # the session still requires saving. provide a save button.
             # validation fails
-            error_msg = "The Sketchbook session has not been saved."
+            error_msg = "The SketchBook session has not been saved."
             self.logger.error(error_msg, extra=_get_save_as_action())
             raise Exception(error_msg)
 
@@ -216,8 +216,8 @@ class SketchbookStartVersionControlPlugin(HookBaseClass):
 
         # save to the new version path
         sketchbook_api.save_file_as(version_path)
-        self.logger.info("A version number has been added to the Sketchbook file...")
-        self.logger.info("  Sketchbook file path: %s" % (version_path,))
+        self.logger.info("A version number has been added to the SketchBook file...")
+        self.logger.info("  SketchBook file path: %s" % (version_path,))
 
     def finalize(self, settings, item):
         """
