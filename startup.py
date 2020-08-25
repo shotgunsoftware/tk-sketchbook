@@ -25,6 +25,9 @@ class SketchBookLauncher(SoftwareLauncher):
 
     Automatically starts up a tk-sketchbook engine with the current
     context.
+
+    Developers can use the SG_SKB_DEBUG environment variable to use
+    locally built cuts of SketchBook.
     """
 
     @property
@@ -126,7 +129,12 @@ class SketchBookLauncher(SoftwareLauncher):
         for install_paths in install_paths_dicts:
             executable_version = install_paths["version"]
             executable_path = install_paths["path"]
-            launcher_name = install_paths["_name"]
+            # Developer environment variable
+            if os.environ.get("SG_SKB_DEBUG", ""):
+                launcher_name = install_paths["path"]
+                self.logger.debug("SG_SKB_DEBUG: Changed launcher_name.")
+            else:
+                launcher_name = install_paths["_name"]
             # Create The actual SoftwareVersions
             sw_versions.append(
                 SoftwareVersion(
@@ -173,11 +181,10 @@ def _get_installation_paths_from_windows_registry(logger):
     logger.debug(
         "Querying Windows registry for keys "
         "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\Common\\SketchBook Pro "
-        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook"
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook\\8.0"
     )
 
     install_paths = []
-    sub_key_names = []
 
     # SketchBook install keys
     base_key_names = [
@@ -187,14 +194,10 @@ def _get_installation_paths_from_windows_registry(logger):
             "SketchBookPro.exe",
             "SketchBookPro",
         ],
-        [
-            "SOFTWARE\\Autodesk\\SketchBook\\8.0",
-            "InstallLocation",
-            "SketchBook.exe",
-            "SketchBook",
-        ],
+        ["SOFTWARE\\Autodesk\\SketchBook\\8.0", "", "SketchBook.exe", "SketchBook",],
     ]
     for base_key_name in base_key_names:
+        sub_key_names = []
         # find all subkeys in keys
         try:
             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key_name[0])
@@ -230,6 +233,16 @@ def _get_installation_paths_from_windows_registry(logger):
         except WindowsError:
             logger.error("Error opening key %s" % key_name)
 
+    # Developer environment variable
+    if os.environ.get("SG_SKB_DEBUG", ""):
+        logger.debug("SG_SKB_DEBUG: Searching C:\\ drive for developer builds.")
+        extra_paths = _get_windows_developer_paths()
+        for extra_path in extra_paths:
+            install_paths.append(
+                {"path": extra_path, "version": "8.9.0.0", "_name": extra_path}
+            )
+            logger.debug("SG_SKB_DEBUG: Found and added %s" % extra_path)
+
     return install_paths
 
 
@@ -254,6 +267,21 @@ def _get_windows_version(full_path):
     return version
 
 
+def _get_windows_developer_paths():
+    """
+    Find other debug cuts of SketchBook on the Windows system
+
+    :returns: a list of found paths as strings
+    """
+    paths = subprocess.check_output(
+        ["cmd", "/c", "dir", "/S", "/B", "C:\\SketchBoo*.exe"]
+    ).decode("utf-8")
+
+    paths = paths.strip().splitlines()
+
+    return paths
+
+
 def _get_installation_paths_from_mac(logger):
     """
     Use system_profiler command for SketchBook installations.
@@ -269,6 +297,6 @@ def _get_installation_paths_from_mac(logger):
         for k, v in installed_apps_dict["SPApplicationsDataType"][i].items():
             if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
                 install_paths.append(installed_apps_dict["SPApplicationsDataType"][i])
-                logger.debug("install_paths is %s" % install_paths)
+                logger.debug("Collected paths from system_profiler command")
 
     return install_paths
