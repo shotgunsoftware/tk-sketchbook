@@ -138,10 +138,10 @@ class SketchBookUnsavedFilePlugin(HookBaseClass):
             return acceptance
 
     def validate(self, settings, item):
-        return True
+        return False
 
     def publish(self, settings, item):
-        return True
+        return False
 
     def finalize(self, settings, item):
-        return True
+        return False
