@@ -84,6 +84,22 @@ class SketchBookSessionCollector(HookBaseClass):
         session_item.thumbnail_enabled = False
         session_item.properties["path"] = path
 
+        # if a work template is defined, add it to the item properties so
+        # that it can be used by attached publish plugins
+        work_template_setting = settings.get("Work Template")
+        if work_template_setting:
+            work_template = publisher.engine.get_template_by_name(
+                work_template_setting.value
+            )
+
+            # store the template on the item for use by publish plugins. we
+            # can't evaluate the fields here because there's no guarantee the
+            # current session path won't change once the item has been created.
+            # the attached publish plugins will need to resolve the fields at
+            # execution time.
+            session_item.properties["work_template"] = work_template
+            self.logger.debug("Work template defined for SketchBook collection.")
+
         self.logger.info("Collected current SketchBook session")
 
         return session_item
