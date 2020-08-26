@@ -85,6 +85,11 @@ class SketchBookEngine(Engine):
         self._init_style_sheet()
         self._init_app_font()
 
+        # Temporarily monkey patch QToolButton and QMenu to resolve a Qt 5.15.0 bug (seems that it will fixed in 5.15.1)
+        # where QToolButton menu will open only on primary screen.
+        self._monkey_patch_qtoolbutton()
+        self._monkey_patch_qmenu()
+
     def post_app_init(self):
         """
         Executed by the system and typically implemented by deriving classes.
@@ -291,6 +296,193 @@ class SketchBookEngine(Engine):
         # finally, run the commands
         for command in commands_to_run:
             command()
+
+    def _monkey_patch_qtoolbutton(self):
+        """
+        Temporary method to monkey patch the QToolButton to fix opening a QToolButton
+        menu on the correct screen (Qt 5.15.0 bug QTBUG-84462).
+        """
+
+        from sgtk.platform.qt import QtGui
+
+        class QToolButtonPatch(QtGui.QToolButton):
+            """
+            A QToolButton object with the exception of modifying the setMenu and
+            addAction methods.
+            """
+
+            # Define QToolButtonPatch class field for menu that will be created to
+            # hold any actions added to the QToolButtonPatch, without a menu object.
+            _patch_menu = None
+
+            def setMenu(self, menu):
+                """
+                Override the setMenu method to link the QToolButton to the menu. The menu
+                will need to know which QToolButton it is being opened from on the showEvent
+                inorder to repositiong itself correctly to the button.
+
+                :param menu: A QMenu object to set for this button.
+                """
+                menu.patch_toolbutton = self
+                super(QToolButtonPatch, self).setMenu(menu)
+
+            def addAction(self, action):
+                """
+                Override the addAction method to create a QMenu object here, that will hold
+                any button menu actions. Normally, the QMenu object would be created on show,
+                in the C++ source QToolButton::popupTimerDone(), but since we've monkey patched
+                the QMenu object, we need to create it on the Python side to make sure we use our
+                QMenuPatch object instead of QMenu.
+
+                :param action: The QAction object to add to our QToolButton menu.
+                """
+
+                if self.menu() is None:
+                    self._patch_menu = QtGui.QMenu()
+                    self.setMenu(self._patch_menu)
+
+                self.menu().addAction(action)
+
+        # All QToolButtons will now be a QToolButtonPatch.
+        QtGui.QToolButton = QToolButtonPatch
+
+    def _monkey_patch_qmenu(self):
+        """
+        Temporary method to monkey patch the QMenu to fix opening a QToolButton menu on
+        the correct screen (Qt 5.15.0 bug QTBUG-84462).
+        """
+
+        from sgtk.platform.qt import QtCore, QtGui
+
+        class QMenuPatch(QtGui.QMenu):
+            """
+            A QMenu object with the exception of modifying the showEvent method.
+            """
+
+            def showEvent(self, event):
+                """
+                Override the showEvent method in order to reposition the menu correctly.
+                """
+
+                # Only apply menu position patch for menus that are shown from QToolButtons.
+                fix_menu_pos = hasattr(self, "patch_toolbutton") and isinstance(
+                    self.patch_toolbutton, QtGui.QToolButton
+                )
+
+                if fix_menu_pos:
+                    # Get the orientation for the menu.
+                    horizontal = True
+                    if isinstance(self.patch_toolbutton.parentWidget(), QtGui.QToolBar):
+                        if (
+                            self.patch_toolbutton.parentWidget().orientation()
+                            == QtCore.Qt.Vertical
+                        ):
+                            horizontal = False
+
+                    # Get the correct position for the menu.
+                    initial_pos = self.position_menu(
+                        horizontal, self.sizeHint(), self.patch_toolbutton
+                    )
+
+                    # Save the geometry of the menu, we will need to re-set the geometry after
+                    # the menu is shown to make sure the menu size is correct.
+                    rect = QtCore.QRect(initial_pos, self.size())
+
+                    # Move the menu to the correct position before the show event.
+                    self.move(initial_pos)
+
+                super(QMenuPatch, self).showEvent(event)
+
+                if fix_menu_pos:
+                    # Help correct the size of the menu.
+                    self.setGeometry(rect)
+
+            def position_menu(self, horizontal, size_hint, toolbutton):
+                """
+                This method is copied from the C++ source qtoolbutton.cpp in Qt 5.15.1 fix version.
+
+                :param horizontal: The orientation of the QToolBar that the menu is shown for. This
+                should be True if the menu is not in a QToolBar.
+                :param size_hint: The QSize size hint for this menu.
+                :param toolbutton: The QToolButtonPatch object that this menu is shown for. Used to
+                positiong the menu correctly.
+                """
+
+                point = QtCore.QPoint()
+
+                rect = toolbutton.rect()
+                desktop = QtGui.QApplication.desktop()
+                screen = desktop.availableGeometry(
+                    toolbutton.mapToGlobal(rect.center())
+                )
+
+                if horizontal:
+                    if toolbutton.isRightToLeft():
+                        if (
+                            toolbutton.mapToGlobal(QtCore.QPoint(0, rect.bottom())).y()
+                            + size_hint.height()
+                            <= screen.bottom()
+                        ):
+                            point = toolbutton.mapToGlobal(rect.bottomRight())
+
+                        else:
+                            point = toolbutton.mapToGlobal(
+                                rect.topRight() - QtCore.QPoint(0, size_hint.height())
+                            )
+
+                        point.setX(point.x() - size_hint.width())
+
+                    else:
+                        if (
+                            toolbutton.mapToGlobal(QtCore.QPoint(0, rect.bottom())).y()
+                            + size_hint.height()
+                            <= screen.bottom()
+                        ):
+                            point = toolbutton.mapToGlobal(rect.bottomLeft())
+
+                        else:
+                            point = toolbutton.mapToGlobal(
+                                rect.topLeft() - QtCore.QPoint(0, size_hint.height())
+                            )
+
+                else:
+                    if toolbutton.isRightToLeft():
+
+                        if (
+                            toolbutton.mapToGlobal(QtCore.QPoint(rect.left(), 0)).x()
+                            - size_hint.width()
+                            <= screen.x()
+                        ):
+                            point = toolbutton.mapToGlobal(rect.topRight())
+
+                        else:
+                            point = toolbutton.mapToGlobal(rect.topLeft())
+                            point.setX(point.x() - size_hint.width())
+
+                    else:
+                        if (
+                            toolbutton.mapToGlobal(QtCore.QPoint(rect.right(), 0)).x()
+                            + size_hint.width()
+                            <= screen.right()
+                        ):
+                            point = toolbutton.mapToGlobal(rect.topRight())
+
+                        else:
+                            point = toolbutton.mapToGlobal(
+                                rect.topLeft() - QtCore.QPoint(size_hint.width(), 0)
+                            )
+
+                point.setX(
+                    max(
+                        screen.left(),
+                        min(point.x(), screen.right() - size_hint.width()),
+                    )
+                )
+                point.setY(point.y() + 1)
+                return point
+
+        # All QMenus will now be a QMenuPatch
+        QtGui.QMenu = QMenuPatch
 
     def _get_qt_style(self):
         """
