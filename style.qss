@@ -1,0 +1,33 @@
+QWidget {
+  font-size: 11px;
+  color: {{SG_PAL_TEXT}};
+}
+
+QLineEdit {
+  background-color: {{SG_PAL_BASE}};
+}
+
+QScrollBar {
+  background-color: {{SG_PAL_MIDLIGHT}};
+  border: none;
+}
+
+QScrollBar::handle {
+  background: {{SG_PAL_LIGHT}};
+}
+
+QMenu {
+  background-color: {{SG_PAL_MID}};
+}
+
+QMenu::item {
+  background-color: {{SG_PAL_MID}};
+}
+
+QMenu::item::selected {
+  background-color: {{SG_PAL_MIDLIGHT}};
+}
+
+QToolButton::hover {
+  background-color: {{SG_PAL_MIDLIGHT}};
+}
