@@ -171,6 +171,9 @@ class SketchBookEngine(Engine):
             logger.debug("Changing the context to '%r", ctx)
             self.change_context(ctx)
 
+    def do_log(self, message):
+        self.logger.debug(message)
+
     @property
     def host_info(self):
         self.logger.debug("%s: Fetching host info...", self)
@@ -195,25 +198,6 @@ class SketchBookEngine(Engine):
             return os.path.join(self.disk_location, constants.BUNDLE_STYLESHEET_FILE)
 
         return self._style_sheet
-
-    def _emit_log_message(self, handler, record):
-        """
-        Called by the engine whenever a new log message is available.
-        All log messages from the toolkit logging namespace will be passed to this method.
-
-        :param handler: Log handler that this message was dispatched from
-        :type handler: :class:`~python.logging.LogHandler`
-        :param record: Std python logging record
-        :type record: :class:`~python.logging.LogRecord`
-        """
-
-        if record.levelno < logging.INFO:
-            formatter = logging.Formatter("Debug: Shotgun %(basename)s: %(message)s")
-        else:
-            formatter = logging.Formatter("Shotgun %(basename)s: %(message)s")
-
-        msg = formatter.format(record)
-        SketchBookLogger.logMessage(msg)
 
     def _run_app_instance_commands(self):
         """
