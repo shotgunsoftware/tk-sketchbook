@@ -14,7 +14,6 @@ import logging
 import sgtk
 from tank.platform import Engine
 
-import SketchBookLogger
 import sketchbook_api
 
 # Although the engine has logging already, this logger is needed for callback

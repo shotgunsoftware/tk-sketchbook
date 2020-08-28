@@ -153,17 +153,21 @@ class SketchBookLauncher(SoftwareLauncher):
         :param sw_version:
         :return: boolean, message
         """
-        # 3 digits on Mac, 4 on Windows
-        if (len(sw_version.version)) == 5:
-            compare_version = str(sw_version.version).join(".0")
-        else:
-            compare_version = sw_version.version
-        if int(compare_version.replace(".", "")) >= int(
-            str(self.minimum_supported_version).replace(".", "")
-        ):
-            return True, "Supported version of SketchBook"
-        else:
-            return False, "Unsupported version of SketchBook"
+        try:
+            # 3 digits on Mac, 4 on Windows
+            if (len(sw_version.version)) == 5:
+                compare_version = str(sw_version.version).join(".0")
+            else:
+                compare_version = sw_version.version
+
+            if int(compare_version.replace(".", "")) >= int(
+                str(self.minimum_supported_version).replace(".", "")
+            ):
+                return True, "Supported version of SketchBook"
+            else:
+                return False, "Unsupported version of SketchBook"
+        except Exception:
+            return False, "Error determining SketchBook version"
 
 
 def _get_installation_paths_from_windows_registry(logger):
