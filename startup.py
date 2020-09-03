@@ -163,7 +163,7 @@ class SketchBookLauncher(SoftwareLauncher):
             if int(compare_version.replace(".", "")) >= int(
                 str(self.minimum_supported_version).replace(".", "")
             ):
-                return True, "Supported version of SketchBook"
+                return True, ""
             else:
                 return False, "Unsupported version of SketchBook"
         except Exception:
@@ -198,7 +198,12 @@ def _get_installation_paths_from_windows_registry(logger):
             "SketchBookPro.exe",
             "SketchBookPro",
         ],
-        ["SOFTWARE\\Autodesk\\SketchBook\\8.0", "", "SketchBook.exe", "SketchBook",],
+        [
+            "SOFTWARE\\Autodesk\\SketchBook\\8.0",
+            "",
+            "SketchBook.exe",
+            "SketchBook",
+        ],
     ]
     for base_key_name in base_key_names:
         sub_key_names = []
