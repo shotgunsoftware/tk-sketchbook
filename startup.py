@@ -35,7 +35,7 @@ class SketchBookLauncher(SoftwareLauncher):
         """
         The minimum software version that is supported by the launcher.
         """
-        return "8.9.0.0"
+        return "2021.1"
 
     def scan_software(self):
         """
@@ -127,7 +127,7 @@ class SketchBookLauncher(SoftwareLauncher):
             install_paths_dicts = _get_installation_paths_from_mac(self.logger)
 
         for install_paths in install_paths_dicts:
-            executable_version = install_paths["version"]
+            executable_version = self._map_version_year(install_paths["version"])
             executable_path = install_paths["path"]
             # Developer environment variable
             if os.environ.get("SG_SKB_DEBUG", ""):
@@ -168,6 +168,15 @@ class SketchBookLauncher(SoftwareLauncher):
                 return False, "Unsupported version of SketchBook"
         except Exception:
             return False, "Error determining SketchBook version"
+
+    @staticmethod
+    def _map_version_year(version):
+        try:
+            year = int(version[:1]) + 2013
+            dot = int(version[2:3]) - 8
+            return "{0}{1}{2}".format(year, ".", dot)
+        except Exception:
+            return version
 
 
 def _get_installation_paths_from_windows_registry(logger):
@@ -259,19 +268,23 @@ def _get_windows_version(full_path):
     """
     Use `wmic` to determine the installed version of SketchBook
     """
-    version_command = subprocess.check_output(
-        [
-            "wmic",
-            "datafile",
-            "where",
-            "name=" + '"' + str(full_path).replace("\\", "\\\\") + '"',
-            "get",
-            "Version",
-            "/value",
-        ]
-    )
-    version_list = re.findall(r"[\d.]", str(version_command))
-    version = "".join(map(str, version_list))
+    try:
+        version_command = subprocess.check_output(
+            [
+                "wmic",
+                "datafile",
+                "where",
+                "name=" + '"' + str(full_path).replace("\\", "\\\\") + '"',
+                "get",
+                "Version",
+                "/value",
+            ]
+        )
+        version_list = re.findall(r"[\d.]", str(version_command))
+        version = "".join(map(str, version_list))
+    except Exception:
+        logger.debug("wmic command unable to determine SketchBook Version.")
+        version = "0.0.0.0"
 
     return version
 
@@ -298,14 +311,19 @@ def _get_installation_paths_from_mac(logger):
     :returns: List of dictionaries including paths where SketchBook is installed.
     """
     install_paths = []
-    installed_apps = subprocess.check_output(
-        ["system_profiler", "SPApplicationsDataType", "-json"]
-    )
-    installed_apps_dict = json.loads(installed_apps.decode("utf-8"))
-    for i in range(len(installed_apps_dict["SPApplicationsDataType"])):
-        for k, v in installed_apps_dict["SPApplicationsDataType"][i].items():
-            if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
-                install_paths.append(installed_apps_dict["SPApplicationsDataType"][i])
-                logger.debug("Collected paths from system_profiler command")
+    try:
+        installed_apps = subprocess.check_output(
+            ["/usr/sbin/system_profiler", "SPApplicationsDataType", "-json"]
+        )
+        installed_apps_dict = json.loads(installed_apps.decode("utf-8"))
+        for i in range(len(installed_apps_dict["SPApplicationsDataType"])):
+            for k, v in installed_apps_dict["SPApplicationsDataType"][i].items():
+                if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
+                    install_paths.append(
+                        installed_apps_dict["SPApplicationsDataType"][i]
+                    )
+                    logger.debug("Collected paths from system_profiler command")
+    except Exception:
+        logger.debug("system_profiler failed to find SketchBook information")
 
     return install_paths
