@@ -1,33 +1,83 @@
+/*
+Copyright (c) 2020 Autodesk, Inc
+
+CONFIDENTIAL AND PROPRIETARY
+
+This work is provided "AS IS" and subject to the Shotgun Pipeline Toolkit
+Source Code License included in this distribution package. See LICENSE.
+By accessing, using, copying or modifying this work you indicate your
+agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
+not expressly granted therein are reserved by Autodesk, Inc.
+*/
+
+/*
+Global styles to ensure Toolkit apps opened from SketchBook show the
+correct toolkit theme, instead of inheriting SketchBook's styles.
+
+Known remaining style issues:
+
+1. Anywhere that a delegate is used or QWidget.setStyleSheet, this has potential
+to bypass our styles set here and styles set programatically in the engine.
+
+2. Any widgets created dynamically, or that cannot be found as a decendant of the
+TankDialog widget created by the engine on running the app.
+
+Apps that have issues:
+    tk-multi-loader2: in the list view highlight selection and button higlight color
+    tk-multi-shotgunpanel: list view menu opened from actions button
+
+Where in the code:
+    tk-multi-shotgunpanel > class ListItemWidget
+    tk-framework-qtwidgets > class ShotgunMenu
+    tk-framework-qtwidgets > class WidgetDelegate
+*/
+
 QWidget {
+  font-family: Open Sans;
+  font-style: Regular;
   font-size: 11px;
-  color: {{SG_PAL_TEXT}};
+  color: palette(text);
 }
 
 QLineEdit {
-  background-color: {{SG_PAL_BASE}};
+  background-color: palette(base);
 }
 
 QScrollBar {
-  background-color: {{SG_PAL_MIDLIGHT}};
+  background-color: palette(midlight);
   border: none;
 }
 
 QScrollBar::handle {
-  background: {{SG_PAL_LIGHT}};
+  background: palette(light);
 }
 
 QMenu {
-  background-color: {{SG_PAL_MID}};
+  background-color: palette(window);
 }
 
 QMenu::item {
-  background-color: {{SG_PAL_MID}};
+  background-color: palette(window);
 }
 
 QMenu::item::selected {
-  background-color: {{SG_PAL_MIDLIGHT}};
+  background-color: palette(midlight);
+}
+
+QMenu::separator {
+  background: palette(base);
 }
 
 QToolButton::hover {
-  background-color: {{SG_PAL_MIDLIGHT}};
+  background-color: palette(light);
+}
+
+/*
+NOTE:  We need to modify tk-multi-publish2 app style.qss file,
+remove the background-color attribute for #progress_bar, OR if
+we set the background-color attribute to palette(base), we do not
+need this QProgressBar style here.
+*/
+QProgressBar {
+  background-color: palette(base);
 }
