@@ -236,7 +236,7 @@ def _get_installation_paths_from_windows_registry(logger):
                 try:
                     base_path = winreg.QueryValueEx(key, base_key_name[1])
                     full_path = base_path[0] + base_key_name[2]
-                    version = _get_windows_version(full_path)
+                    version = _get_windows_version(full_path, logger)
                     name = base_key_name[3]
                     install_paths.append(
                         {"path": full_path, "version": version, "_name": name}
@@ -264,7 +264,7 @@ def _get_installation_paths_from_windows_registry(logger):
     return install_paths
 
 
-def _get_windows_version(full_path):
+def _get_windows_version(full_path, logger):
     """
     Use `wmic` to determine the installed version of SketchBook
     """
