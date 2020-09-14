@@ -12,7 +12,6 @@ import os
 import sys
 import subprocess
 import re
-import json
 
 import sgtk
 from sgtk.platform import SoftwareLauncher, SoftwareVersion, LaunchInformation
@@ -310,19 +309,20 @@ def _get_installation_paths_from_mac(logger):
 
     :returns: List of dictionaries including paths where SketchBook is installed.
     """
+    # Local scoping import for Mac only
+    import plistlib
+
     install_paths = []
     try:
         installed_apps = subprocess.check_output(
-            ["/usr/sbin/system_profiler", "SPApplicationsDataType", "-json"]
+            ["/usr/sbin/system_profiler", "SPApplicationsDataType", "-xml"]
         )
-        installed_apps_dict = json.loads(installed_apps.decode("utf-8"))
-        for i in range(len(installed_apps_dict["SPApplicationsDataType"])):
-            for k, v in installed_apps_dict["SPApplicationsDataType"][i].items():
+        installed_apps_dict = plistlib.loads(installed_apps, fmt=plistlib.FMT_XML)
+        for i in range(len(installed_apps_dict[0]["_items"])):
+            for k, v in installed_apps_dict[0]["_items"][i].items():
                 if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
-                    install_paths.append(
-                        installed_apps_dict["SPApplicationsDataType"][i]
-                    )
-                    logger.debug("Collected paths from system_profiler command")
+                    install_paths.append(installed_apps_dict[0]["_items"][i])
+        logger.debug("Collected paths from system_profiler command")
     except Exception:
         logger.debug("system_profiler failed to find SketchBook information")
 
