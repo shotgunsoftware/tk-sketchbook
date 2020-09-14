@@ -163,7 +163,7 @@ class SketchBookEngine(Engine):
         sketchbook_api.refresh_menu(self.menu.create())
 
     def run_command(self, commandName):
-        self.menu.doCommand(commandName)
+        self.menu.do_command(commandName)
 
     def refresh_context(self):
         logger.debug("Refreshing the context")

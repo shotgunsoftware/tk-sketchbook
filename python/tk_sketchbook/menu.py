@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Autodesk
+# Copyright (c) 2020 Autodesk, Inc.
 #
 # CONFIDENTIAL AND PROPRIETARY
 #
@@ -8,10 +8,6 @@
 # agreement to the Shotgun Pipeline Toolkit Source Code License. All rights
 # not expressly granted therein are reserved by Autodesk, Inc.
 
-"""
-Menu handling for SketchBook
-"""
-
 import os
 
 from sgtk.platform.qt import QtGui
@@ -20,12 +16,22 @@ from sgtk.util import is_windows, is_macos, is_linux
 
 
 class SketchBookMenu(object):
+    """
+    Menu handling for SketchBook
+    """
+
     ABOUT_MENU_TEXT = "About Shotgun Pipeline Toolkit"
     JUMP_TO_SG_TEXT = "Jump to Shotgun"
     JUMP_TO_FS_TEXT = "Jump to File System"
     SEPARATOR_ITEM = "_SEPARATOR_"
 
     def __init__(self, engine):
+        """
+        Initializes a new menu generator.
+
+        :param engine: The currently-running engine.
+        :type engine: :class:`tank.platform.Engine`
+        """
         self._engine = engine
         self.logger = self._engine.logger
 
@@ -40,13 +46,15 @@ class SketchBookMenu(object):
 
         self.logger.debug("Creating Shotgun Menu")
 
-        menuItems = [self.createContextSubmenu(), [self.SEPARATOR_ITEM, []]]
-        menuItems.extend(self.createAppsEntries())
-        self.logger.debug("Setting menu items to %s.", menuItems)
-        return menuItems
+        menu_items = [self.create_context_submenu(), [self.SEPARATOR_ITEM, []]]
+        menu_items.extend(self.create_favourites_entries())
+        menu_items.extend([[self.SEPARATOR_ITEM, []]])
+        menu_items.extend(self.create_apps_entries())
+        self.logger.debug("Setting menu items to %s.", menu_items)
+        return menu_items
         # sketchbook_api.refresh_menu ([["ItemOne", ["Sub1", "Sub2"]], ["ItemTwo", []], ["ItemThree", []]])
 
-    def createContextSubmenu(self):
+    def create_context_submenu(self):
         if self._engine.context.filesystem_locations:
             names = [self.JUMP_TO_SG_TEXT, self.JUMP_TO_FS_TEXT, self.SEPARATOR_ITEM]
         else:
@@ -61,40 +69,49 @@ class SketchBookMenu(object):
         )
         return [self.context_name, names]
 
-    def createAppsEntries(self):
+    def create_apps_entries(self):
         return [
             [name, []]
             for name, data in self._engine.commands.items()
             if data.get("properties").get("type") != "context_menu"
         ]
 
-    def doCommand(self, commandName):
-        if not self.alreadyRunning(commandName):
-            self.logger.debug("Running command %s.", commandName)
+    def create_favourites_entries(self):
+        # Add favourites
+        favourites = []
+        for fav in self._engine.get_setting("menu_favourites"):
+            menu_name = fav["name"]
+            favourites.append([menu_name, []])
+        self.logger.debug("favourites is: %s" % favourites)
+        return favourites
 
-            if commandName == self.JUMP_TO_SG_TEXT:
+    def do_command(self, command_name):
+        if not self.already_running(command_name):
+            self.logger.debug("Running command %s.", command_name)
+
+            if command_name == self.JUMP_TO_SG_TEXT:
                 self.jump_to_sg()
-            elif commandName == self.JUMP_TO_FS_TEXT:
+            elif command_name == self.JUMP_TO_FS_TEXT:
                 self.jump_to_fs()
-            elif self._engine.commands[commandName]:
-                if self._engine.commands[commandName]["callback"]:
-                    self._engine.commands[commandName]["callback"]()
+            elif self._engine.commands[command_name]:
+                if self._engine.commands[command_name]["callback"]:
+                    self._engine.commands[command_name]["callback"]()
 
-            self.logger.debug("Ran command %s.", commandName)
+            self.logger.debug("Ran command %s.", command_name)
         else:
-            self.bringToFront(commandName)
+            self.bring_to_front(command_name)
 
-    def alreadyRunning(self, commandName):
-        return self.dialogForCommand(commandName) is not None
+    def already_running(self, command_name):
+        return self.dialog_for_command(command_name) is not None
 
-    def bringToFront(self, commandName):
-        dialog = self.dialogForCommand(commandName)
+    def bring_to_front(self, command_name):
+        dialog = self.dialog_for_command(command_name)
         if dialog:
             dialog.show()
             dialog.activateWindow()
             dialog.raise_()
 
-    def dialogForCommand(self, commandName):
+    def dialog_for_command(self, command_name):
         for dialog in self._engine.created_qt_dialogs:
             if {
                 "Shotgun Panel...": "Shotgun: Shotgun",
@@ -104,15 +121,15 @@ class SketchBookMenu(object):
                 "Shotgun Python Console": "Shotgun: Shotgun Python Console",
                 "File Open...": "Shotgun: File Open",
                 "File Save...": "Shotgun: File Save",
-            }.get(commandName) == dialog.windowTitle():
+            }.get(command_name) == dialog.windowTitle():
                 return dialog
 
-        self.logger.debug("Don't have a dialog for command %s", commandName)
+        self.logger.debug("Don't have a dialog for command %s", command_name)
         return None
 
     def jump_to_sg(self):
         """
-        Jump to shotgun, launch web browser
+        Jump to Shotgun, launch web browser
         """
         url = self._engine.context.shotgun_url
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(url))
