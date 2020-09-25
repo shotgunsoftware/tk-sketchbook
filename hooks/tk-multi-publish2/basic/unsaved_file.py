@@ -27,7 +27,7 @@ class SketchBookUnsavedFilePlugin(HookBaseClass):
         """
 
         # ensure icon is there
-        return os.path.join(self.disk_location, "icons", "file.png")
+        return os.path.join(self.disk_location, "../icons", "file.png")
 
     @property
     def name(self):
@@ -43,7 +43,7 @@ class SketchBookUnsavedFilePlugin(HookBaseClass):
         contain simple html for formatting.
         """
         embed_image = os.path.join(
-            self.disk_location, "docs", "sketchbook-publisher-screenshot.png"
+            self.disk_location, "../docs", "sketchbook-publisher-screenshot.png"
         )
 
         help_url = "https://github.com/shotgunsoftware/tk-sketchbook/wiki/Publishing"

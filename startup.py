@@ -140,7 +140,7 @@ class SketchBookLauncher(SoftwareLauncher):
                     executable_version,
                     launcher_name,
                     executable_path,
-                    os.path.join(self.disk_location, "SketchBook.png"),
+                    os.path.join(self.disk_location, "icon_256.png"),
                 )
             )
 

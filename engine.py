@@ -9,7 +9,6 @@
 # granted therein are reserved by Autodesk, Inc.
 
 import os
-import logging
 
 import sgtk
 from tank.platform import Engine

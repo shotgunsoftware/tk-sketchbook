@@ -28,7 +28,7 @@ class SketchBookUploadVersionPlugin(HookBaseClass):
         """
 
         # ensure icon is there
-        return os.path.join(self.disk_location, "icons", "review.png")
+        return os.path.join(self.disk_location, "../icons", "review.png")
 
     @property
     def name(self):

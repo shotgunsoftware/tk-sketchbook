@@ -47,7 +47,8 @@ class SketchBookMenu(object):
         self.logger.debug("Creating Shotgun Menu")
 
         menu_items = [self.create_context_submenu(), [self.SEPARATOR_ITEM, []]]
-        menu_items.extend(self.create_favourites_entries())
+        # TODO: have PR #792 in SKB repo merged before uncommenting below
+        # menu_items.extend(self.create_favourites_entries())
         menu_items.extend([[self.SEPARATOR_ITEM, []]])
         menu_items.extend(self.create_apps_entries())
         self.logger.debug("Setting menu items to %s.", menu_items)

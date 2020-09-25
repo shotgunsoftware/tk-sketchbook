@@ -78,7 +78,7 @@ class SketchBookSessionCollector(HookBaseClass):
             "sketchbook.session", "SketchBook Session", display_name
         )
 
-        icon_path = os.path.join(self.disk_location, "icons", "SketchBook.png")
+        icon_path = os.path.join(self.disk_location, "../icons", "SketchBook.png")
 
         session_item.set_icon_from_path(icon_path)
         session_item.thumbnail_enabled = False

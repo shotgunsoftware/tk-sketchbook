@@ -28,7 +28,7 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
         """
 
         # ensure icon is there
-        return os.path.join(self.disk_location, "icons", "version_up.png")
+        return os.path.join(self.disk_location, "../icons", "version_up.png")
 
     @property
     def name(self):
