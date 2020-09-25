@@ -309,15 +309,19 @@ def _get_installation_paths_from_mac(logger):
 
     :returns: List of dictionaries including paths where SketchBook is installed.
     """
-    # Local scoping import for Mac only
+    # Local scoping import for Mac only with Py 2 / 3 check
     import plistlib
+    from tank_vendor import six
 
     install_paths = []
     try:
         installed_apps = subprocess.check_output(
             ["/usr/sbin/system_profiler", "SPApplicationsDataType", "-xml"]
         )
-        installed_apps_dict = plistlib.loads(installed_apps, fmt=plistlib.FMT_XML)
+        if six.PY3:
+            installed_apps_dict = plistlib.loads(installed_apps, fmt=plistlib.FMT_XML)
+        else:
+            installed_apps_dict = plistlib.readPlistFromString(installed_apps)
         for i in range(len(installed_apps_dict[0]["_items"])):
             for k, v in installed_apps_dict[0]["_items"][i].items():
                 if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
