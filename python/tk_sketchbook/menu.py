@@ -71,11 +71,14 @@ class SketchBookMenu(object):
         return [self.context_name, names]
 
     def create_apps_entries(self):
-        return [
-            [name, []]
-            for name, data in self._engine.commands.items()
-            if data.get("properties").get("type") != "context_menu"
-        ]
+        return sorted(
+            [
+                [name, []]
+                for name, data in self._engine.commands.items()
+                if data.get("properties").get("type") != "context_menu"
+            ],
+            key=lambda entry: entry[0],
+        )
 
     def create_favourites_entries(self):
         # Add favourites
