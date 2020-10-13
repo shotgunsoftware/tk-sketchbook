@@ -81,3 +81,7 @@ need this QProgressBar style here.
 QProgressBar {
   background-color: palette(base);
 }
+
+QMessageBox {
+  background-color: palette(window);
+}
