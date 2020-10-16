@@ -37,6 +37,8 @@ QWidget {
   font-style: Regular;
   font-size: 11px;
   color: palette(text);
+  selection-color: white;
+  selection-background-color: {{SG_HIGHLIGHT_COLOR}};
 }
 
 QLineEdit {
@@ -84,4 +86,16 @@ QProgressBar {
 
 QMessageBox {
   background-color: palette(window);
+}
+
+QDialog {
+  background: palette(window);
+}
+
+QFileDialog QListView{
+  background-color: palette(base);
+}
+
+QFileDialog QTreeView {
+  background-color: palette(base);
 }
