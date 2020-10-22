@@ -62,6 +62,16 @@ class SketchBookEngine(Engine):
 
         super(SketchBookEngine, self).__init__(tk, context, engine_instance_name, env)
 
+    @staticmethod
+    def get_current_engine():
+        """
+        Return the engine that is currently running. This is used by the SketchBook
+        C++/Python API to determine if the engine it holds a reference to is the stale
+        or up to date.
+        """
+
+        return sgtk.platform.current_engine()
+
     def destroy_engine(self):
         """
         Called when the engine should tear down itself and all its apps.
