@@ -631,6 +631,8 @@ class SketchBookEngine(Engine):
             title, bundle, widget, parent
         )
 
+        dialog.setProperty("Shotgun", True)
+
         # Search and replace any palette(BRUSH_NAME) with the palette values defined by this engine.
         # This ensures any widget style sheet set with "palette(BRUSH_NAME)" will resovle to the
         # palette defined by this engine (e.g. if style sheet applied to widget before we call
