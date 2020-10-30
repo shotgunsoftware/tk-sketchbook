@@ -110,12 +110,13 @@ class SketchBookActions(HookBaseClass):
             "Parameters: %s. Shotgun Data: %s" % (name, params, sg_data)
         )
 
-        # resolve path
-        path = self.get_publish_path(sg_data)
-
         if name == "open_file":
+            # resolve path
+            path = self.get_publish_path(sg_data)
             return sketchbook_api.open_file(path)
         elif name == "add_image":
+            # resolve path
+            path = self.get_publish_path(sg_data)
             return sketchbook_api.add_image(path)
 
         else:
