@@ -24,9 +24,6 @@ class SketchBookLauncher(SoftwareLauncher):
 
     Automatically starts up a tk-sketchbook engine with the current
     context.
-
-    Developers can use the SG_SKB_DEBUG environment variable to use
-    locally built cuts of SketchBook.
     """
 
     @property
@@ -128,12 +125,7 @@ class SketchBookLauncher(SoftwareLauncher):
         for install_paths in install_paths_dicts:
             executable_version = self._map_version_year(install_paths["version"])
             executable_path = install_paths["path"]
-            # Developer environment variable
-            if os.environ.get("SG_SKB_DEBUG", ""):
-                launcher_name = install_paths["path"]
-                self.logger.debug("SG_SKB_DEBUG: Changed launcher_name.")
-            else:
-                launcher_name = install_paths["_name"]
+            launcher_name = install_paths["_name"]
             # Create The actual SoftwareVersions
             sw_versions.append(
                 SoftwareVersion(
@@ -250,16 +242,6 @@ def _get_installation_paths_from_windows_registry(logger):
         except WindowsError:
             logger.error("Error opening key %s" % key_name)
 
-    # Developer environment variable
-    if os.environ.get("SG_SKB_DEBUG", ""):
-        logger.debug("SG_SKB_DEBUG: Searching C:\\ drive for developer builds.")
-        extra_paths = _get_windows_developer_paths()
-        for extra_path in extra_paths:
-            install_paths.append(
-                {"path": extra_path, "version": "8.9.0.0", "_name": extra_path}
-            )
-            logger.debug("SG_SKB_DEBUG: Found and added %s" % extra_path)
-
     return install_paths
 
 
@@ -286,21 +268,6 @@ def _get_windows_version(full_path, logger):
         version = "0.0.0.0"
 
     return version
-
-
-def _get_windows_developer_paths():
-    """
-    Find other debug cuts of SketchBook on the Windows system
-
-    :returns: a list of found paths as strings
-    """
-    paths = subprocess.check_output(
-        ["cmd", "/c", "dir", "/S", "/B", "C:\\SketchBoo*.exe"]
-    ).decode("utf-8")
-
-    paths = paths.strip().splitlines()
-
-    return paths
 
 
 def _get_installation_paths_from_mac(logger):
