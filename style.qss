@@ -11,81 +11,278 @@ not expressly granted therein are reserved by Autodesk, Inc.
 */
 
 /*
-Global styles to ensure Toolkit apps opened from SketchBook show the
-correct toolkit theme, instead of inheriting SketchBook's styles.
+Qt styles for tk-sketchbook to apply to any dialog shown. These help to
+override styles defined by the QApplication. These will not override
+styles applied at the QWidget level.
 
-Known remaining style issues:
+Styles listed and defined in alphabetical order.
+ */
 
-1. Anywhere that a delegate is used or QWidget.setStyleSheet, this has potential
-to bypass our styles set here and styles set programatically in the engine.
-
-2. Any widgets created dynamically, or that cannot be found as a decendant of the
-TankDialog widget created by the engine on running the app.
-
-Apps that have issues:
-    tk-multi-loader2: in the list view highlight selection and button higlight color
-    tk-multi-shotgunpanel: list view menu opened from actions button
-
-Where in the code:
-    tk-multi-shotgunpanel > class ListItemWidget
-    tk-framework-qtwidgets > class ShotgunMenu
-    tk-framework-qtwidgets > class WidgetDelegate
-*/
-
-QWidget {
-  font-family: Open Sans;
-  font-style: Regular;
-  font-size: 11px;
+QCheckBox {
   color: palette(text);
-  selection-color: white;
-  selection-background-color: {{SG_HIGHLIGHT_COLOR}};
+  padding-left: 2px;
+  spacing: 8px;
+}
+
+QComboBox {
+  background-color: palette(base);
+  border: none;
+  border-radius: 3px;
+  min-height: 25px;
+}
+QComboBox::drop-down {
+  border: none;
+}
+QComboBox:hover {
+  background-color: palette(midlight);
+  min-height: 25px;
+}
+QComboBox QAbstractItemView {
+  selection-background-color: palette(highlight);
+}
+
+/* Catch all for view selection */
+QColumnView,
+QListView,
+QTableWidget,
+QTableView,
+QTableWidget,
+QTreeView,
+QTreeWidget
+{
+  selection-background-color: palette(highlight);
+  selection-color: palette(highlighted-text);
+}
+
+QDialog {
+  background: palette(window);
+}
+
+/* Special handling for QFrame shapes (e.g. HLine) */
+QFrame#line
+{
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid palette(light);
+}
+QWidget#scrollAreaWidgetContents QFrame#line
+{
+  background-color: palette(midlight);
+  border: none;
+  border-bottom: 1px solid palette(light);
+}
+QFrame
+#config_line,
+#break_line
+{
+  background-color: palette(midlight);
+  border: none;
+  border-bottom: 1px solid palette(light);
+}
+QFrame#top_group QFrame#line {
+  background-color: palette(light);
+}
+QFrame
+#vertical_splitter,
+#splitter
+{
+  background-color: palette(window);
+}
+
+QHeaderView::section {
+  background-color: palette(light);
+  border: 1px solid palette(mid);
+  color: palette(text);
+  padding-top: 4px;
+  padding-left: 4px;
+}
+QHeaderView::down-arrow {
+  subcontrol-position: right;
+  width: 10px;
+  left: -10px;
 }
 
 QLineEdit {
   background-color: palette(base);
+  border: none;
+  border-radius: 3px;
+  color: palette(text);
+  min-height: 25px;
+}
+
+QListView {
+  background: palette(base);
+  color: palette(text);
+  show-decoration-selected: 1;
+}
+QListView:item {
+  border: none;
+}
+QListView:item:selected {
+  background: palette(highlight);
+  color: palette(highlighted-text);
+}
+QListView:item:!selected:hover {
+  background: transparent;
+}
+
+QMenu {
+  background-color: palette(window);
+  color: palette(text);
+}
+QMenu::item::selected {
+  background-color: palette(midlight);
+}
+QMenu::separator {
+  background: palette(mid);
+  height: 1px;
+}
+
+QMessageBox {
+  background-color: palette(window);
+}
+
+QProgressBar {
+  background-color: palette(base);
+}
+
+QPushButton {
+  background-color: palette(light);
+  border: none;
+  color: palette(text);
+  min-height: 25px;
+  min-width: 80px;
+}
+QPushButton:disabled {
+  background: palette(button);
+  color: grey;
+}
+QPushButton:pressed {
+  background-color: palette(dark);
+}
+QPushButton:!pressed:hover {
+  background-color: grey;
+}
+QPushButton#action_button {
+  min-width: 1px;
+  min-height: 1px;
+}
+QPushButton#button {
+  min-width: 1px;
+  min-height: 1px;
+}
+QPushButton::menu-indicator {
+  subcontrol-position: center center;
+  subcontrol-origin: padding;
+  left: 1px;
+  top: -1px;
 }
 
 QScrollBar {
   background-color: palette(midlight);
   border: none;
 }
-
 QScrollBar::handle {
   background: palette(light);
 }
 
-QMenu {
-  background-color: palette(window);
-}
-
-QMenu::item {
-  background-color: palette(window);
-}
-
-QMenu::item::selected {
-  background-color: palette(midlight);
-}
-
-QMenu::separator {
+QSpinBox {
   background: palette(base);
+  border: none;
+  border-radius: 3px;
+  color: palette(text);
+  min-height: 25px;
+  padding: 2px;
+  selection-background-color: palette(highlight);
+}
+QSpinBox::up-button {
+  background: palette(light);
+  border-top: 1px solid palette(base);
+  border-left: 1px solid palette(base);
+  border-right: 1px solid palette(base);
+}
+QSpinBox::up-button:hover {
+  background: palette(midlight);
+}
+QSpinBox::down-button {
+  background: palette(light);
+  border: 1px solid palette(base);
+}
+QSpinBox::down-button:hover {
+  background: palette(midlight);
 }
 
-QToolButton::hover {
-  background-color: palette(light);
+QTabBar::tab {
+  background: palette(midlight);
+  border-top: 1px solid palette(base);
+  border-left: 1px solid palette(base);
+  border-right: 1px solid palette(base);
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  min-width: 1ex;
+  padding: 2px 8px 2px 8px;
+}
+QTabBar::tab:selected {
+    background: palette(light);
 }
 
-/*
-NOTE:  We need to modify tk-multi-publish2 app style.qss file,
-remove the background-color attribute for #progress_bar, OR if
-we set the background-color attribute to palette(base), we do not
-need this QProgressBar style here.
-*/
-QProgressBar {
+QTabWidget::pane {
+  border: 1px solid palette(base);
+  background: palette(window);
+}
+QTabWidget::tab-bar {
+  left: 5px;
+  background: yellow;
+}
+
+QTextEdit {
   background-color: palette(base);
 }
 
-QMessageBox {
-  background-color: palette(window);
+QToolButton {
+  background-color: transparent;
+  border: none;
+  border-radius: 3px;
+  padding: 5px;
+}
+QToolButton:checked {
+  background-color: palette(mid);
+}
+QToolButton:hover {
+  background-color: palette(light);
+}
+QToolButton::menu-indicator {
+  width: 8px;
+}
+QToolButton#expand_indicator {
+  padding: 0px;
+}
+
+QTreeView {
+  background: palette(base);
+  show-decoration-selected: 1;
+}
+QTreeView:item {
+  border: none;
+}
+QTreeView:item:selected {
+  background: palette(highlight);
+  color: palette(highlighted-text);
+}
+QTreeView:item:!selected:hover {
+  background: transparent;
+}
+
+QWidget {
+  border: none;
+  color: palette(text);
+  font-family: Open Sans;
+  font-style: Regular;
+  font-size: 11px;
+}
+/* Special case for QtWidget FileListForm */
+QWidget#FileListForm {
+  background: palette(base);
 }
 
 QDialog {

@@ -30,37 +30,78 @@ class SketchBookEngine(Engine):
         Initialize the engine.
         """
 
-        # The engine style sheet to help set global styles for the Sketchbook apps, since
-        # the engine does not apply any styles to the QApplication object.
+        # SketchBook's palette differs from Toolkit, so the engine will let SketchBook
+        # use the QApplication palette and will maintain its own style sheet and palette
+        # to apply to only Toolkit Qt widgets and override any necessary styles.
         self._style_sheet = None
-
-        # The style sheet data and palette to apply to any app run by the engine.
-        self._app_style_sheet = None
-        self._app_palette = None
+        self._style_sheet_data = None
+        self._palette = None
 
         # List of all available QPalette brushes used for style sheets.
+        # Reference: https://doc.qt.io/qt-5/stylesheet-reference.html#paletterole
         self._palette_brushes = [
-            "dark",
+            "alternate-base",
             "base",
+            "bright-text",
+            "button",
+            "button-text",
+            "dark",
+            "highlight",
+            "highlighted-text",
+            "light",
+            "link",
+            "link-visited",
             "mid",
             "midlight",
-            "light",
-            "text",
-            "alternateBase",
-            "brightText",
-            "button",
-            "buttonText",
-            "highlight",
-            "link",
-            "linkVisited",
             "shadow",
-            "toolTipBase",
-            "toolTipText",
+            "text",
             "window",
-            "windowText",
+            "window-text",
         ]
 
         super(SketchBookEngine, self).__init__(tk, context, engine_instance_name, env)
+
+    @property
+    def host_info(self):
+        """
+        Return information about host DCC, SketchBook.
+        """
+
+        self.logger.debug("%s: Fetching host info...", self)
+        return sketchbook_api.host_info()
+
+    @property
+    def context_change_allowed(self):
+        """
+        Specifies that context changes are allowed by the engine.
+        """
+        return True
+
+    @property
+    def style_sheet(self):
+        """
+        The file path to the engine's Qt style sheet.
+        """
+
+        if self._style_sheet is None:
+            from sgtk.platform import constants
+
+            self._style_sheet = os.path.join(
+                self.disk_location, constants.BUNDLE_STYLESHEET_FILE
+            )
+
+        return self._style_sheet
+
+    @property
+    def style_sheet_data(self):
+        """
+        Return the style sheet data loaded from the engine's style.qss file.
+        """
+
+        if self._style_sheet_data is None:
+            self._style_sheet_data = self._load_style_sheet()
+
+        return self._style_sheet_data
 
     @staticmethod
     def get_current_engine():
@@ -107,16 +148,7 @@ class SketchBookEngine(Engine):
         QtCore.QTextCodec.setCodecForCStrings(utf8)
         self.logger.debug("set utf-8 codec for widget text")
 
-        # Set the Qt flag to propogate widget styles applied through style sheets to
-        # the child widgets.
-        QtCore.QCoreApplication.setAttribute(
-            QtCore.Qt.AA_UseStyleSheetPropagationInWidgetStyles, True
-        )
-        # Initialize a Qt palette, font and stylesheet that will be applied to each
-        # engine app, on show.
-        self._init_app_palette()
-        self._init_app_style_sheet()
-        self._init_app_font()
+        self._init_qt_style()
 
     def post_app_init(self):
         """
@@ -163,13 +195,25 @@ class SketchBookEngine(Engine):
             sketchbook_api.refresh_menu(self.menu.create())
 
     def refresh_menu(self):
+        """
+        Call the SketchBook API to refresh the Shotgun menu.
+        """
+
         self.logger.debug("Refreshing with menu object %s.", self.menu)
         sketchbook_api.refresh_menu(self.menu.create())
 
     def run_command(self, commandName):
+        """
+        Request the menu to run the given command, by name.
+        """
+
         self.menu.do_command(commandName)
 
     def refresh_context(self):
+        """
+        Refresh the Shotgun context.
+        """
+
         logger.debug("Refreshing the context")
 
         # Get the path of the current open Maya scene file.
@@ -200,32 +244,19 @@ class SketchBookEngine(Engine):
             self.change_context(ctx)
 
     def do_log(self, message):
+        """
+        Log a debug message.
+        """
+
         self.logger.debug(message)
 
-    @property
-    def host_info(self):
-        self.logger.debug("%s: Fetching host info...", self)
-        return sketchbook_api.host_info()
-
-    @property
-    def context_change_allowed(self):
+    def palette(self):
         """
-        Specifies that context changes are allowed by the engine.
-        """
-        return True
-
-    @property
-    def style_sheet(self):
-        """
-        The Qt style sheet file (.qss) the engine applies to all its apps.
+        Return the custom QPalette defiend by the engine. We cannot use the QApplication
+        palette since SketchBook's style and palette is different than Toolkit's.
         """
 
-        if self._style_sheet is None:
-            from sgtk.platform import constants
-
-            return os.path.join(self.disk_location, constants.BUNDLE_STYLESHEET_FILE)
-
-        return self._style_sheet
+        return self._palette
 
     def _run_app_instance_commands(self):
         """
@@ -309,285 +340,266 @@ class SketchBookEngine(Engine):
         for command in commands_to_run:
             command()
 
-    def _get_qt_style(self):
+    def _init_qt_style(self):
         """
-        Convenience method to create the Qt style to be used by the engine. This is
-        to help keep styles consistent. The style object will be destroyed with the
-        widget that it is set to, which means this style object is created each time
-        we call _create_dialog.
+        Initialize the necessary attributes and properties to allow the engine to
+        manage a separate Qt style than SketchBook itself.
         """
-        from sgtk.platform.qt import QtGui
+        from sgtk.platform.qt import QtCore, QtGui
 
-        return QtGui.QStyleFactory.create("fusion")
+        # Set the Qt flag to propogate widget styles applied through style sheets to
+        # the child widgets.
+        QtCore.QCoreApplication.setAttribute(
+            QtCore.Qt.AA_UseStyleSheetPropagationInWidgetStyles, True
+        )
 
-    def _init_app_style_sheet(self):
+        # Initialize the engine's QPalette and then load in the engine's style.qss
+        # Must be done in this order since the style sheet will use the engine's palette
+        self._init_palette()
+        self._load_style_sheet()
+
+        # Monkey patch the QWidget palette method to ensure all Toolkit QWidgets use the
+        # palette defined by the SketchBook engine, instead of the QApplication.
+        QtGui.QWidget.palette = self.palette
+
+        # Monkey patch the QWidget setStyleSheet method to ensure that the style sheet
+        # 'palette' token resolution uses the palette set up by this engine. For an
+        # example, see tk-framework-qtwidgets shotgun_menu.py.
+        qt_widget_set_style_sheet = QtGui.QWidget.setStyleSheet
+
+        def patch_set_style_sheet(qt_widget, style_sheet):
+            qss_data = self._resolve_palette_stylesheet_tokens(style_sheet)
+            qt_widget_set_style_sheet(qt_widget, qss_data)
+
+        QtGui.QWidget.setStyleSheet = patch_set_style_sheet
+
+    def _load_style_sheet(self):
         """
         Read the engine style sheet and initialize the style sheet data that will
-        be used by any app run by the engine.
+        be applied to any dialog created.
         """
 
+        qss_data = ""
         with open(self.style_sheet, "rt") as style_sheet_file:
-            self._app_style_sheet = style_sheet_file.read()
-            self._app_style_sheet = self._resolve_sg_stylesheet_tokens(
-                self._app_style_sheet
-            )
+            qss_data = style_sheet_file.read()
+            qss_data = self._resolve_palette_stylesheet_tokens(qss_data)
 
-    def _init_app_font(self):
+        return qss_data
+
+    def _init_palette(self):
         """
-        Initialize a QFont object to be used by any app run by the engine.
+        Initialize the engine's QPalette. This palette set up is copied from
+        :class:`sgtk.platform.Engine` :meth:`__initialize_dark_look_and_feel_qt5`,
+        and tweaked as necessary.
+
+        It would be nice if tk-core split this method up so that we could get
+        the QPalette it uses, without applying it to the QApplication.
         """
+
         from sgtk.platform.qt import QtGui
 
-        self._app_font = QtGui.QFont()
-        self._app_font.setPixelSize(11)
-
-    def _init_app_palette(self):
-        """
-        Initialize a QPalette object and the dictionary mapping for style sheet
-        constants to palette brush colors, to be used by any app run by the engine.
-        NOTE: this uses the same palette as in :class:`sgtk.platform.Engine`
-        :meth:`__initialize_dark_look_and_feel_qt5`, it would be ideal if this
-        method was refactored to into two methods, one to initialize the QApplication
-        with the QPalette, and one to create and return the QPalette -- this way
-        we do not have to duplicate this code, and remain consistent with the
-        rest of Toolkit.
-        """
-        from sgtk.platform.qt import QtGui
-
-        app_style = self._get_qt_style()
-        self._app_palette = app_style.standardPalette()
+        # Use the QApplication style to get the base palette.
+        app_style = QtGui.QApplication.instance().style()
+        self._palette = app_style.standardPalette()
 
         # Disabled Brushes
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Button, QtGui.QColor(80, 80, 80)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Light, QtGui.QColor(97, 97, 97)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Midlight, QtGui.QColor(59, 59, 59)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Dark, QtGui.QColor(37, 37, 37)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Mid, QtGui.QColor(45, 45, 45)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Base, QtGui.QColor(42, 42, 42)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Window, QtGui.QColor(68, 68, 68)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled, QtGui.QPalette.Shadow, QtGui.QColor(0, 0, 0)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled,
             QtGui.QPalette.AlternateBase,
-            self._app_palette.color(
-                QtGui.QPalette.Disabled, QtGui.QPalette.Base
-            ).lighter(110),
+            self._palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Base).lighter(
+                110
+            ),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled,
             QtGui.QPalette.Text,
-            self._app_palette.color(
-                QtGui.QPalette.Disabled, QtGui.QPalette.Base
-            ).lighter(250),
+            self._palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Base).lighter(
+                250
+            ),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled,
             QtGui.QPalette.Link,
-            self._app_palette.color(
-                QtGui.QPalette.Disabled, QtGui.QPalette.Base
-            ).lighter(250),
+            self._palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Base).lighter(
+                250
+            ),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Disabled,
             QtGui.QPalette.LinkVisited,
-            self._app_palette.color(
-                QtGui.QPalette.Disabled, QtGui.QPalette.Base
-            ).lighter(110),
-        )
-
-        # Active Brushes
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active,
-            QtGui.QPalette.WindowText,
-            QtGui.QColor(200, 200, 200),
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(75, 75, 75)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active,
-            QtGui.QPalette.ButtonText,
-            QtGui.QColor(200, 200, 200),
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Light, QtGui.QColor(97, 97, 97)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Midlight, QtGui.QColor(59, 59, 59)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Dark, QtGui.QColor(37, 37, 37)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Mid, QtGui.QColor(45, 45, 45)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Text, QtGui.QColor(200, 200, 200)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Link, QtGui.QColor(200, 200, 200)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.LinkVisited, QtGui.QColor(97, 97, 97)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.BrightText, QtGui.QColor(37, 37, 37)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(42, 42, 42)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Window, QtGui.QColor(68, 68, 68)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active, QtGui.QPalette.Shadow, QtGui.QColor(0, 0, 0)
-        )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Active,
-            QtGui.QPalette.AlternateBase,
-            self._app_palette.color(QtGui.QPalette.Active, QtGui.QPalette.Base).lighter(
+            self._palette.color(QtGui.QPalette.Disabled, QtGui.QPalette.Base).lighter(
                 110
             ),
         )
 
+        # Active Brushes
+        self._palette.setBrush(
+            QtGui.QPalette.Active,
+            QtGui.QPalette.WindowText,
+            QtGui.QColor(200, 200, 200),
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Button, QtGui.QColor(75, 75, 75)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active,
+            QtGui.QPalette.ButtonText,
+            QtGui.QColor(200, 200, 200),
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Light, QtGui.QColor(97, 97, 97)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Midlight, QtGui.QColor(59, 59, 59)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Dark, QtGui.QColor(37, 37, 37)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Mid, QtGui.QColor(45, 45, 45)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Text, QtGui.QColor(200, 200, 200)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Link, QtGui.QColor(200, 200, 200)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.LinkVisited, QtGui.QColor(97, 97, 97)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.BrightText, QtGui.QColor(37, 37, 37)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Base, QtGui.QColor(42, 42, 42)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Window, QtGui.QColor(68, 68, 68)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Shadow, QtGui.QColor(0, 0, 0)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active,
+            QtGui.QPalette.AlternateBase,
+            self._palette.color(QtGui.QPalette.Active, QtGui.QPalette.Base).lighter(
+                110
+            ),
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active, QtGui.QPalette.Highlight, QtGui.QColor(24, 166, 227)
+        )
+        self._palette.setBrush(
+            QtGui.QPalette.Active,
+            QtGui.QPalette.HighlightedText,
+            QtGui.QColor(240, 240, 240),
+        )
+
         # Inactive Brushes
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive,
             QtGui.QPalette.WindowText,
             QtGui.QColor(200, 200, 200),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Button, QtGui.QColor(75, 75, 75)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive,
             QtGui.QPalette.ButtonText,
             QtGui.QColor(200, 200, 200),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Light, QtGui.QColor(97, 97, 97)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Midlight, QtGui.QColor(59, 59, 59)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Dark, QtGui.QColor(37, 37, 37)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Mid, QtGui.QColor(45, 45, 45)
         )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Inactive, QtGui.QPalette.Text, QtGui.QColor(200, 200, 200)
+        self._palette.setBrush(
+            QtGui.QPalette.Inactive,
+            QtGui.QPalette.Text,
+            QtGui.QColor(200, 200, 200),
         )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Inactive, QtGui.QPalette.Link, QtGui.QColor(200, 200, 200)
+        self._palette.setBrush(
+            QtGui.QPalette.Inactive,
+            QtGui.QPalette.Link,
+            QtGui.QColor(200, 200, 200),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive,
             QtGui.QPalette.LinkVisited,
             QtGui.QColor(97, 97, 97),
         )
-        self._app_palette.setBrush(
-            QtGui.QPalette.Inactive, QtGui.QPalette.BrightText, QtGui.QColor(37, 37, 37)
+        self._palette.setBrush(
+            QtGui.QPalette.Inactive,
+            QtGui.QPalette.BrightText,
+            QtGui.QColor(37, 37, 37),
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Base, QtGui.QColor(42, 42, 42)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Window, QtGui.QColor(68, 68, 68)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive, QtGui.QPalette.Shadow, QtGui.QColor(0, 0, 0)
         )
-        self._app_palette.setBrush(
+        self._palette.setBrush(
             QtGui.QPalette.Inactive,
             QtGui.QPalette.AlternateBase,
-            self._app_palette.color(
-                QtGui.QPalette.Inactive, QtGui.QPalette.Base
-            ).lighter(110),
-        )
-
-    def _apply_widget_style(self, widget, style, append_global_styles=False):
-        """
-        Apply widget style, palette, and font defined by the engine. Styles are applied to each widget,
-        instead of the QApplication since Sketchbook shares the application object and does not use
-        the same dark theme as Shotgun Toolkit.
-        :param widget: The QWidget to set the style to.
-        :param style: The QCommonStyle to apply to the widget.
-        :param set_style_sheet: True will set the style sheet on the widget. This is only needed
-        for top-level widgets, since style sheets propogate to child widgets.
-        """
-
-        widget.setStyle(style)
-        widget.setPalette(self._app_palette)
-        widget.setFont(self._app_font)
-
-        # Search and replace any palette(BRUSH_NAME) with the palette values defined by this engine.
-        # This ensures any widget style sheet set with "palette(BRUSH_NAME)" will resovle to the
-        # palette defined by this engine (e.g. if style sheet applied to widget before we call
-        # set palette above, the widget style sheet will resolve to the incorrect palette).
-        widget_style_sheet = self._resolve_palette_stylesheet_tokens(
-            widget.styleSheet()
-        )
-
-        if append_global_styles:
-            # Make sure not to override any existing widget style sheet data by appending the style
-            # sheet data from the engine.
-            widget_style_sheet += "\n\n{}".format(self._app_style_sheet)
-
-            # Add a file watcher to the engine .qss file. This should only be turned on
-            # for debugging, else it will slow down production performance.
-            if os.getenv("SHOTGUN_QSS_FILE_WATCHER", None) == "1":
-                try:
-                    self._add_stylesheet_file_watcher(self.style_sheet, widget)
-                except Exception as e:
-                    # We don't want the watcher to cause any problem, so we catch
-                    # errors but issue a warning so the developer knows that interactive
-                    # styling is off.
-                    self.log_warning("Unable to set qss file watcher: {}".format(e))
-
-        widget.setStyleSheet(widget_style_sheet)
-        widget.update()
-
-        self.logger.debug(
-            "{engine}: Applied style sheet to widget '{widget}'\n\n{style}".format(
-                engine=self, widget=widget.objectName(), style=widget_style_sheet
-            )
+            self._palette.color(QtGui.QPalette.Inactive, QtGui.QPalette.Base).lighter(
+                110
+            ),
         )
 
     def _resolve_palette_stylesheet_tokens(self, style_sheet):
         """
-        Search and replace all palette(BRUSH_NAME) strings with the corresponding palette
-        brush value matching the BRUSH_NAME. This ensures that all style sheets using
-        "palette(BRUSH_NAME)" will resovle to the palette defined by this engine
-        (e.g. if style sheet applied to widget before the engine sets the palette,
-        the widget style sheet will resolve to an incorrect palette.
-        :param style_sheet: The QT style sheet to resolve.
+        Search and replace all palette(BRUSH_NAME) tokens with the corresponding engine's
+        palette brush value matching the BRUSH_NAME.
+
+        :param style_sheet: The Qt style sheet to resolve.
+        :return: The resolved Qt style sheet
         """
 
         processed_style_sheet = style_sheet
 
         for brush in self._palette_brushes:
+            qt_brush = "".join(word.title() for word in brush.split("-"))
+            qt_brush = qt_brush[0].lower() + qt_brush[1:]
             try:
                 processed_style_sheet = processed_style_sheet.replace(
                     "palette(%s)" % brush,
-                    getattr(self._app_palette, brush)().color().name(),
+                    getattr(self._palette, qt_brush)().color().name(),
                 )
 
             except AttributeError:
@@ -600,36 +612,14 @@ class SketchBookEngine(Engine):
 
         return processed_style_sheet
 
-    def _resolve_sg_stylesheet_tokens(self, style_sheet):
-        """
-        Override the :class:`sgtk.platform.Engine` :meth:`show_dialog`.
-        First call the overriden method, then further process the style sheet to resolve
-        any palette specific tokens.
-        For example, palette(base) is converted to the engine's palette base brush color.
-        :param style_sheet: Stylesheet string to process
-        :returns: Stylesheet string with replacements applied
-        """
-
-        processed_style_sheet = super(
-            SketchBookEngine, self
-        )._resolve_sg_stylesheet_tokens(style_sheet)
-
-        processed_style_sheet = self._resolve_palette_stylesheet_tokens(
-            processed_style_sheet
-        )
-
-        return processed_style_sheet
-
     def _create_dialog(self, title, bundle, widget, parent):
         """
         Override the :class:`sgtk.platform.Engine` :meth:`_create_dialog`.
-        First call the overriden method to create the dialog, then apply the app style
-        defined by the engine to the dialog widget. Qt style is applied on a per app
-        basis since Sketchbook's light themed style conflicts with Shotgun Toolkit's
-        dark theme, and we cannot simply call :class:`sgtk.platform.Engine`
-        :meth:`_initialize_dark_look_and_feel` which sets the style and palette on the
-        shared QtGui.QApplication (e.g. Sketchbook will then be affected with the dark
-        style applied).
+
+        First call the overriden method to create the dialog. Then append the
+        engine's style sheet data to the created dialogs style sheet to
+        override any necessary styles to the dialog and all decendent widgets.
+
         :param title: The title of the window
         :param bundle: The app, engine or framework object that is associated with this window
         :param widget: A QWidget instance to be embedded in the newly created dialog.
@@ -641,22 +631,26 @@ class SketchBookEngine(Engine):
             title, bundle, widget, parent
         )
 
-        # Append global styles defined in tk-sketchbook/style.qss to the most top-level
-        # widget (the dialog), and these styles will be propogated to all children, but not
-        # override any styles applied directly to the widget.
-        append_global_styles = True
-        app_style = self._get_qt_style()
-        widgets = [dialog]
+        # Search and replace any palette(BRUSH_NAME) with the palette values defined by this engine.
+        # This ensures any widget style sheet set with "palette(BRUSH_NAME)" will resovle to the
+        # palette defined by this engine (e.g. if style sheet applied to widget before we call
+        # set palette above, the widget style sheet will resolve to the incorrect palette).
+        dialog_style_sheet = self._resolve_palette_stylesheet_tokens(
+            dialog.styleSheet()
+        )
+        # Append the engine's style sheet data
+        dialog_style_sheet += "\n\n{}".format(self.style_sheet_data)
+        dialog.setStyleSheet(dialog_style_sheet)
 
-        while widgets:
-            widget = widgets.pop()
-
-            # We can only apply style to style aware widgets.
-            if isinstance(widget, QtGui.QWidget) or hasattr(widget, "setStyle"):
-                self._apply_widget_style(widget, app_style, append_global_styles)
-                append_global_styles = False
-
-            # Apply style to each child widget.
-            widgets.extend(widget.children())
+        # Add a file watcher to the engine .qss file. This should only be turned on
+        # for debugging, else it will slow down production performance.
+        if os.getenv("SHOTGUN_QSS_FILE_WATCHER", None) == "1":
+            try:
+                self._add_stylesheet_file_watcher(self.style_sheet, widget)
+            except Exception as e:
+                # We don't want the watcher to cause any problem, so we catch
+                # errors but issue a warning so the developer knows that interactive
+                # styling is off.
+                self.log_warning("Unable to set qss file watcher: {}".format(e))
 
         return dialog
