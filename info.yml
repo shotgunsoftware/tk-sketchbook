@@ -14,16 +14,17 @@
 configuration:
     debug_logging:
         type: bool
-        description: Controls whether debug messages should be emitted to the logger
+        description: "Controls whether debug messages should be emitted to the logger"
         default_value: False
 
     menu_favourites:
         type: list
-        description: "Controls the favourites section on the main menu. This is a list
-                     and each menu item is a dictionary with keys app_instance and name.
-                     The app_instance parameter connects this entry to a particular
-                     app instance defined in the environment configuration file. The name
-                     is a menu name to make a favourite."
+        description:
+            "Controls the favourites section on the main menu. This is a list
+            and each menu item is a dictionary with keys app_instance and name.
+            The app_instance parameter connects this entry to a particular
+            app instance defined in the environment configuration file. The name
+            is a menu name to make a favourite."
         allows_empty: True
         values:
             type: dict
@@ -33,12 +34,13 @@ configuration:
 
     run_at_startup:
         type: list
-        description: "Controls what apps will run on startup.  This is a list where each element
-                     is a dictionary with two keys: 'app_instance' and 'name'.  The app_instance
-                     value connects this entry to a particular app instance defined in the
-                     environment configuration file.  The name is the menu name of the command
-                     to run when the SketchBook engine starts up.  If name is '' then all commands from the
-                     given app instance are started."
+        description:
+            "Controls what apps will run on startup.  This is a list where each element
+            is a dictionary with two keys: 'app_instance' and 'name'.  The app_instance
+            value connects this entry to a particular app instance defined in the
+            environment configuration file.  The name is the menu name of the command
+            to run when the SketchBook engine starts up.  If name is '' then all commands from the
+            given app instance are started."
         allows_empty: True
         default_value: []
         values:
@@ -48,12 +50,31 @@ configuration:
                 app_instance: { type: str }
 
     compatibility_dialog_min_version:
-        type:           int
-        description:    "Specify the minimum Application major version that will prompt a warning if
-                            it isn't yet fully supported and tested with Toolkit.  To disable the warning
-                            dialog for the version you are testing, it is recommended that you set this
-                            value to the current major version + 1."
+        type: int
+        description:
+            "Specify the minimum Application major version that will prompt a warning if
+            it isn't yet fully supported and tested with Toolkit.  To disable the warning
+            dialog for the version you are testing, it is recommended that you set this
+            value to the current major version + 1."
         default_value:  2022
+
+    file_save_app:
+        type: str
+        description:
+            "The engine Application to use to perform a file save. The Application must define
+            a method 'show_file_save_dlg' to be called by the engine to perform the save action.
+            If specifying cusotm file_save_app, see the default Application 'tk-multi-workfiles2'
+            as an example."
+        default_value: "tk-multi-workfiles2"
+
+    require_save_before_publish:
+        type: bool
+        description:
+            "If true the user will be prompted to save their current work to
+            Shotgun before publishing and will not allow publish until the current
+            work has been saved, else if false (default) the publish UI will
+            show immediately."
+        default_value: True
 
 # the Shotgun fields that this engine needs in order to operate correctly
 requires_shotgun_fields:

@@ -148,7 +148,10 @@ class SketchBookUploadVersionPlugin(HookBaseClass):
         # Let's tell the log something when a file is not saved
         if not file_path:
             self.logger.warn(
-                "The SketchBook session has not been saved. Please save your file."
+                "SketchBook `{name}` plugin is not accepted because the current session has not been saved. Please save and refresh.".format(
+                    name=self.name
+                ),
+                extra=_get_save_as_action(),
             )
             return {"accepted": False, "checked": False}
 
@@ -327,3 +330,20 @@ class SketchBookUploadVersionPlugin(HookBaseClass):
             return item.context.project
         else:
             return None
+
+
+def _get_save_as_action():
+    """
+    Simple helper for returning a log action dict for saving the session
+    """
+
+    engine = sgtk.platform.current_engine()
+    callback = engine.show_save_dialog
+
+    return {
+        "action_button": {
+            "label": "Save As...",
+            "tooltip": "Save the current session",
+            "callback": callback,
+        }
+    }

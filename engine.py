@@ -30,6 +30,8 @@ class SketchBookEngine(Engine):
         Initialize the engine.
         """
 
+        self._file_save_app = None
+
         # SketchBook's palette differs from Toolkit, so the engine will let SketchBook
         # use the QApplication palette and will maintain its own style sheet and palette
         # to apply to only Toolkit Qt widgets and override any necessary styles.
@@ -103,10 +105,21 @@ class SketchBookEngine(Engine):
 
         return self._style_sheet_data
 
+    @property
+    def file_save_app(self):
+        """
+        Return the name of the Application that is used to perform file save actions.
+        """
+
+        if self._file_save_app is None:
+            self._file_save_app = self.get_setting("file_save_app", None)
+
+        return self._file_save_app
+
     @staticmethod
     def get_current_engine():
         """
-        Return the engine that is currently running. This is used by the SketchBook
+        Return the engine that Toolkit is currently running. This is used by the SketchBook
         C++/Python API to determine if the engine it holds a reference to is the stale
         or up to date.
         """
@@ -216,7 +229,7 @@ class SketchBookEngine(Engine):
 
         logger.debug("Refreshing the context")
 
-        # Get the path of the current open Maya scene file.
+        # Get the path of the current open SketchBook file.
         new_path = sketchbook_api.current_file_path()
 
         if new_path is None:
@@ -656,3 +669,31 @@ class SketchBookEngine(Engine):
                 self.log_warning("Unable to set qss file watcher: {}".format(e))
 
         return dialog
+
+    def show_save_dialog(self):
+        """
+        Open the tk-multi-workfiles2 app's file save dialog. Fallback to using VRED save
+        dialog UI if workfiles is not available.
+        """
+
+        try:
+            kwargs = {"use_modal_dialog": True}
+            app = self.apps.get(self.file_save_app, None)
+            app.show_file_save_dlg(**kwargs)
+
+        except (AttributeError, TypeError) as file_save_app_error:
+            self.logger.debug(
+                "Engine 'file_save_app' is not set up to perform custom file save: {error}".format(
+                    error=file_save_app_error
+                )
+            )
+            self.logger.warning(
+                "Engine falling back to SketchBook to perform file save."
+            )
+            path = sketchbook_api.get_current_path()
+            sketchbook_api.save_file_as(path)
+
+        except Exception as error:
+            raise sgtk.TankError(
+                "Engine save dialog error: {error}".format(error=error)
+            )

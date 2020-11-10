@@ -138,9 +138,11 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
             # provide a save button. the session will need to be saved before
             # validation will succeed.
             self.logger.warn(
-                "The SketchBook session has not been saved. Please save your file."
+                "SketchBook `{name}` plugin is not accepted because the current session has not been saved. Please save and refresh.".format(
+                    name=self.name
+                ),
+                extra=_get_save_as_action(),
             )
-            acceptance = {"accepted": False, "checked": False}
 
         self.logger.info(
             "SketchBook '%s' plugin accepted the current session." % (self.name,),
@@ -166,13 +168,6 @@ class SketchBookStartVersionControlPlugin(HookBaseClass):
 
         publisher = self.parent
         path = _session_path()
-
-        if not path:
-            # the session still requires saving. provide a save button.
-            # validation fails
-            error_msg = "The SketchBook session has not been saved."
-            self.logger.error(error_msg, extra=_get_save_as_action())
-            raise Exception(error_msg)
 
         # NOTE: If the plugin is attached to an item, that means no version
         # number could be found in the path. If that's the case, the work file
@@ -285,15 +280,7 @@ def _get_save_as_action():
     """
 
     engine = sgtk.platform.current_engine()
-
-    # default save callback
-    callback = engine.open_save_as_dialog
-
-    # if workfiles2 is configured, use that for file save
-    if "tk-multi-workfiles2" in engine.apps:
-        app = engine.apps["tk-multi-workfiles2"]
-        if hasattr(app, "show_file_save_dlg"):
-            callback = app.show_file_save_dlg
+    callback = engine.show_save_dialog
 
     return {
         "action_button": {
