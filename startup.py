@@ -31,7 +31,7 @@ class SketchBookLauncher(SoftwareLauncher):
         """
         The minimum software version that is supported by the launcher.
         """
-        return "2021.1"
+        return "9.0.0.0"
 
     def scan_software(self):
         """
@@ -123,7 +123,7 @@ class SketchBookLauncher(SoftwareLauncher):
             install_paths_dicts = _get_installation_paths_from_mac(self.logger)
 
         for install_paths in install_paths_dicts:
-            executable_version = self._map_version_year(install_paths["version"])
+            executable_version = install_paths["version"]
             executable_path = install_paths["path"]
             launcher_name = install_paths["_name"]
             # Create The actual SoftwareVersions
@@ -160,15 +160,6 @@ class SketchBookLauncher(SoftwareLauncher):
         except Exception:
             return False, "Error determining SketchBook version"
 
-    @staticmethod
-    def _map_version_year(version):
-        try:
-            year = int(version[:1]) + 2013
-            dot = int(version[2:3]) - 8
-            return "{0}{1}{2}".format(year, ".", dot)
-        except Exception:
-            return version
-
 
 def _get_installation_paths_from_windows_registry(logger):
     """
@@ -184,63 +175,54 @@ def _get_installation_paths_from_windows_registry(logger):
 
     logger.debug(
         "Querying Windows registry for keys "
-        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\Common\\SketchBook Pro "
-        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook\\8.0"
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook\\9.0"
     )
 
     install_paths = []
 
-    # SketchBook install keys
-    base_key_names = [
-        [
-            "SOFTWARE\\Autodesk\\Common\\SketchBook Pro",
-            "Location",
-            "SketchBookPro.exe",
-            "SketchBookPro",
-        ],
-        [
-            "SOFTWARE\\Autodesk\\SketchBook\\8.0",
-            "",
-            "SketchBook.exe",
-            "SketchBook",
-        ],
+    # SketchBook install key
+    base_key_name = [
+        "SOFTWARE\\Autodesk\\SketchBook\\9.0",
+        "",
+        "SketchBookPro.exe",
+        "SketchBook Pro",
     ]
-    for base_key_name in base_key_names:
-        sub_key_names = []
-        # find all subkeys in keys
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key_name[0])
-            sub_key_count = winreg.QueryInfoKey(key)[0]
-            i = 0
-            while i < sub_key_count:
-                sub_key_names.append(winreg.EnumKey(key, i))
-                i += 1
-            winreg.CloseKey(key)
-        except WindowsError:
-            logger.error("error opening key %s" % base_key_name[0])
 
-        # Query the value Location or InstallLocation on all subkeys.
-        try:
-            for name in sub_key_names:
-                key_name = base_key_name[0] + "\\" + name
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_name)
-                try:
-                    base_path = winreg.QueryValueEx(key, base_key_name[1])
-                    full_path = base_path[0] + base_key_name[2]
-                    version = _get_windows_version(full_path, logger)
-                    name = base_key_name[3]
-                    install_paths.append(
-                        {"path": full_path, "version": version, "_name": name}
-                    )
-                    logger.debug("Found (Install)Location value for key %s" % key_name)
-                except WindowsError:
-                    logger.debug(
-                        "Value (Install)Location not found for key %s, skipping key"
-                        % key_name
-                    )
-                winreg.CloseKey(key)
-        except WindowsError:
-            logger.error("Error opening key %s" % key_name)
+    sub_key_names = []
+    # find all subkeys in keys
+    try:
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, base_key_name[0])
+        sub_key_count = winreg.QueryInfoKey(key)[0]
+        i = 0
+        while i < sub_key_count:
+            sub_key_names.append(winreg.EnumKey(key, i))
+            i += 1
+        winreg.CloseKey(key)
+    except WindowsError:
+        logger.error("error opening key %s" % base_key_name[0])
+
+    # Query the value InstallLocation on all subkeys.
+    try:
+        for name in sub_key_names:
+            key_name = base_key_name[0] + "\\" + name
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_name)
+            try:
+                base_path = winreg.QueryValueEx(key, base_key_name[1])
+                full_path = base_path[0] + base_key_name[2]
+                version = _get_windows_version(full_path, logger)
+                name = base_key_name[3]
+                install_paths.append(
+                    {"path": full_path, "version": version, "_name": name}
+                )
+                logger.debug("Found InstallLocation value for key %s" % key_name)
+            except WindowsError:
+                logger.debug(
+                    "Value InstallLocation not found for key %s, skipping key"
+                    % key_name
+                )
+            winreg.CloseKey(key)
+    except WindowsError:
+        logger.error("Error opening key %s" % key_name)
 
     return install_paths
 
@@ -285,16 +267,16 @@ def _get_installation_paths_from_mac(logger):
         if six.PY3:
             installed_path = (
                 subprocess.check_output(
-                    ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBook"]
+                    ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBookPro"]
                 )
                 .decode("utf-8")
                 .strip()
             )
         else:
             installed_path = subprocess.check_output(
-                ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBook"]
+                ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBookPro"]
             ).strip()
-    except:
+    except Exception:
         logger.debug("Python subprocess of mdfind command failed")
 
     if installed_path:
@@ -308,8 +290,11 @@ def _get_installation_paths_from_mac(logger):
                     installed_path + "/Contents/Info.plist",
                 ]
             )
-        except:
+        except Exception:
             logger.debug("Python subprocess of PlistBuddy failed")
+    else:
+        logger.debug("Did not find an installed_path. Exiting.")
+        return install_paths
 
     if installed_path_plist:
         try:
@@ -319,19 +304,24 @@ def _get_installation_paths_from_mac(logger):
                 )
             else:
                 installed_app_dict = plistlib.readPlistFromString(installed_path_plist)
-        except:
+        except Exception:
             logger.debug("Python plistlib call failed")
+    else:
+        logger.debug("Did not find an installed_path_plist. Exiting.")
+        return install_paths
 
     if installed_app_dict:
         try:
             install_paths.append(
                 {
-                    "path": installed_path + "/Contents/MacOS/SketchBook",
+                    "path": installed_path + "/Contents/MacOS/SketchBookPro",
                     "version": installed_app_dict["CFBundleVersion"],
                     "_name": "SketchBook Pro",
                 }
             )
-        except:
+        except Exception:
             logger.debug("Python path append failed")
+    else:
+        logger.debug("Did not find an installed_apps_dict. Exiting.")
 
     return install_paths
