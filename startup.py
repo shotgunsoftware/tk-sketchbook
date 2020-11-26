@@ -282,19 +282,56 @@ def _get_installation_paths_from_mac(logger):
 
     install_paths = []
     try:
-        installed_apps = subprocess.check_output(
-            ["/usr/sbin/system_profiler", "SPApplicationsDataType", "-xml"]
-        )
         if six.PY3:
-            installed_apps_dict = plistlib.loads(installed_apps, fmt=plistlib.FMT_XML)
+            installed_path = (
+                subprocess.check_output(
+                    ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBook"]
+                )
+                .decode("utf-8")
+                .strip()
+            )
         else:
-            installed_apps_dict = plistlib.readPlistFromString(installed_apps)
-        for i in range(len(installed_apps_dict[0]["_items"])):
-            for k, v in installed_apps_dict[0]["_items"][i].items():
-                if k == "_name" and v == "SketchBook" or v == "SketchBookPro":
-                    install_paths.append(installed_apps_dict[0]["_items"][i])
-        logger.debug("Collected paths from system_profiler command")
-    except Exception:
-        logger.debug("system_profiler failed to find SketchBook information")
+            installed_path = subprocess.check_output(
+                ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBook"]
+            ).strip()
+    except:
+        logger.debug("Python subprocess of mdfind command failed")
+
+    if installed_path:
+        try:
+            installed_path_plist = subprocess.check_output(
+                [
+                    "/usr/libexec/PlistBuddy",
+                    "-x",
+                    "-c",
+                    "Print",
+                    installed_path + "/Contents/Info.plist",
+                ]
+            )
+        except:
+            logger.debug("Python subprocess of PlistBuddy failed")
+
+    if installed_path_plist:
+        try:
+            if six.PY3:
+                installed_app_dict = plistlib.loads(
+                    installed_path_plist, fmt=plistlib.FMT_XML
+                )
+            else:
+                installed_app_dict = plistlib.readPlistFromString(installed_path_plist)
+        except:
+            logger.debug("Python plistlib call failed")
+
+    if installed_app_dict:
+        try:
+            install_paths.append(
+                {
+                    "path": installed_path + "/Contents/MacOS/SketchBook",
+                    "version": installed_app_dict["CFBundleVersion"],
+                    "_name": "SketchBook Pro",
+                }
+            )
+        except:
+            logger.debug("Python path append failed")
 
     return install_paths
