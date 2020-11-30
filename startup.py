@@ -31,7 +31,7 @@ class SketchBookLauncher(SoftwareLauncher):
         """
         The minimum software version that is supported by the launcher.
         """
-        return "9.0.0.0"
+        return "9.0"
 
     def scan_software(self):
         """
@@ -104,7 +104,7 @@ class SketchBookLauncher(SoftwareLauncher):
     def _find_software(self):
         """
         Find executables in the Registry for Windows
-        Find executables using system_profiler for MacOS
+        Find executables using mdfind for MacOS
 
         :returns: List of :class:`SoftwareVersion` instances
         """
@@ -145,13 +145,7 @@ class SketchBookLauncher(SoftwareLauncher):
         :return: boolean, message
         """
         try:
-            # 3 digits on Mac, 4 on Windows
-            if (len(sw_version.version)) == 5:
-                compare_version = str(sw_version.version).join(".0")
-            else:
-                compare_version = sw_version.version
-
-            if int(compare_version.replace(".", "")) >= int(
+            if int(sw_version.version.replace(".", "")[0:3]) >= int(
                 str(self.minimum_supported_version).replace(".", "")
             ):
                 return True, ""
@@ -175,14 +169,14 @@ def _get_installation_paths_from_windows_registry(logger):
 
     logger.debug(
         "Querying Windows registry for keys "
-        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook\\9.0"
+        "HKEY_LOCAL_MACHINE\\SOFTWARE\\Autodesk\\SketchBook Pro\\9.0"
     )
 
     install_paths = []
 
     # SketchBook install key
     base_key_name = [
-        "SOFTWARE\\Autodesk\\SketchBook\\9.0",
+        "SOFTWARE\\Autodesk\\SketchBook Pro\\9.0",
         "",
         "SketchBookPro.exe",
         "SketchBook Pro",
@@ -244,17 +238,17 @@ def _get_windows_version(full_path, logger):
             ]
         )
         version_list = re.findall(r"[\d.]", str(version_command))
-        version = "".join(map(str, version_list))
+        version = "".join(map(str, version_list[0:3]))
     except Exception:
         logger.debug("wmic command unable to determine SketchBook Version.")
-        version = "0.0.0.0"
+        version = "0.0"
 
     return version
 
 
 def _get_installation_paths_from_mac(logger):
     """
-    Use system_profiler command for SketchBook installations.
+    Use mdfind command for SketchBook installations.
 
     :returns: List of dictionaries including paths where SketchBook is installed.
     """
@@ -267,7 +261,10 @@ def _get_installation_paths_from_mac(logger):
         if six.PY3:
             installed_path = (
                 subprocess.check_output(
-                    ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBookPro"]
+                    [
+                        "/usr/bin/mdfind",
+                        "kMDItemCFBundleIdentifier = com.autodesk.SketchBookPro",
+                    ]
                 )
                 .decode("utf-8")
                 .strip()
@@ -314,8 +311,8 @@ def _get_installation_paths_from_mac(logger):
         try:
             install_paths.append(
                 {
-                    "path": installed_path + "/Contents/MacOS/SketchBookPro",
-                    "version": installed_app_dict["CFBundleVersion"],
+                    "path": installed_path,
+                    "version": installed_app_dict["CFBundleVersion"][0:3],
                     "_name": "SketchBook Pro",
                 }
             )
