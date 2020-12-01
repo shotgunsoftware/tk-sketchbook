@@ -259,7 +259,7 @@ def _get_installation_paths_from_mac(logger):
     install_paths = []
     try:
         if six.PY3:
-            installed_path = (
+            installed_path_list = (
                 subprocess.check_output(
                     [
                         "/usr/bin/mdfind",
@@ -267,58 +267,62 @@ def _get_installation_paths_from_mac(logger):
                     ]
                 )
                 .decode("utf-8")
-                .strip()
+                .split("\n")
             )
         else:
-            installed_path = subprocess.check_output(
+            installed_path_list = subprocess.check_output(
                 ["mdfind", "kMDItemCFBundleIdentifier = com.autodesk.SketchBookPro"]
-            ).strip()
+            ).split("\n")
+        filtered_path_list = list(filter(None, installed_path_list))
     except Exception:
         logger.debug("Python subprocess of mdfind command failed")
 
-    if installed_path:
-        try:
-            installed_path_plist = subprocess.check_output(
-                [
-                    "/usr/libexec/PlistBuddy",
-                    "-x",
-                    "-c",
-                    "Print",
-                    installed_path + "/Contents/Info.plist",
-                ]
-            )
-        except Exception:
-            logger.debug("Python subprocess of PlistBuddy failed")
-    else:
-        logger.debug("Did not find an installed_path. Exiting.")
-        return install_paths
-
-    if installed_path_plist:
-        try:
-            if six.PY3:
-                installed_app_dict = plistlib.loads(
-                    installed_path_plist, fmt=plistlib.FMT_XML
+    if filtered_path_list:
+        for installed_path in filtered_path_list:
+            try:
+                installed_path_plist = subprocess.check_output(
+                    [
+                        "/usr/libexec/PlistBuddy",
+                        "-x",
+                        "-c",
+                        "Print",
+                        installed_path + "/Contents/Info.plist",
+                    ]
                 )
-            else:
-                installed_app_dict = plistlib.readPlistFromString(installed_path_plist)
-        except Exception:
-            logger.debug("Python plistlib call failed")
-    else:
-        logger.debug("Did not find an installed_path_plist. Exiting.")
-        return install_paths
+            except Exception:
+                logger.debug("Python subprocess of PlistBuddy failed")
 
-    if installed_app_dict:
-        try:
-            install_paths.append(
-                {
-                    "path": installed_path,
-                    "version": installed_app_dict["CFBundleVersion"][0:3],
-                    "_name": "SketchBook Pro",
-                }
-            )
-        except Exception:
-            logger.debug("Python path append failed")
+            if installed_path_plist:
+                try:
+                    if six.PY3:
+                        installed_app_dict = plistlib.loads(
+                            installed_path_plist, fmt=plistlib.FMT_XML
+                        )
+                    else:
+                        installed_app_dict = plistlib.readPlistFromString(
+                            installed_path_plist
+                        )
+                except Exception:
+                    logger.debug("Python plistlib call failed")
+            else:
+                logger.debug("Did not find an installed_path_plist. Exiting.")
+                return install_paths
+
+            if installed_app_dict:
+                try:
+                    install_paths.append(
+                        {
+                            "path": installed_path,
+                            "version": installed_app_dict["CFBundleVersion"][0:3],
+                            "_name": "SketchBook Pro",
+                        }
+                    )
+                except Exception:
+                    logger.debug("Python path append failed")
+            else:
+                logger.debug("Did not find an installed_app_dict. Exiting.")
+
     else:
-        logger.debug("Did not find an installed_apps_dict. Exiting.")
+        logger.debug("Did not find an installed_path_list. Exiting.")
 
     return install_paths
